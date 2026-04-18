@@ -1,0 +1,9 @@
+PyQt6>=6.6.0
+python-nmap>=0.7.1
+scapy>=2.5.0
+wmi>=1.5.1; sys_platform=="win32"
+pywin32>=306; sys_platform=="win32"
+paramiko>=3.4.0
+pysnmp>=6.1.0
+keyring>=24.3.0
+pyinstaller>=6.3.0

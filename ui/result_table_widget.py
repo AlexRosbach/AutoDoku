@@ -1,0 +1,110 @@
+"""Result table widget showing discovered network devices."""
+from __future__ import annotations
+import logging
+
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import (
+    QAbstractItemView,
+    QHeaderView,
+    QTableWidget,
+    QTableWidgetItem,
+)
+
+from data.models import Device, DeviceType
+
+logger = logging.getLogger(__name__)
+
+# Column definitions: (header label, Device attribute or None for computed)
+_COLUMNS: list[tuple[str, str | None]] = [
+    ("IP-Adresse",  "ip"),
+    ("MAC-Adresse", "mac"),
+    ("Hostname",    "hostname"),
+    ("Typ",         "device_type"),
+    ("Betriebssystem", "os"),
+    ("Hersteller",  "manufacturer"),
+    ("Status",      "scan_status"),
+]
+
+# Text badges for device types (no external icon resources needed)
+_TYPE_LABELS: dict[str, str] = {
+    DeviceType.CLIENT.value:  "[Client]",
+    DeviceType.SERVER.value:  "[Server]",
+    DeviceType.PRINTER.value: "[Drucker]",
+    DeviceType.SWITCH.value:  "[Switch]",
+    DeviceType.UNKNOWN.value: "[?]",
+}
+
+
+class ResultTableWidget(QTableWidget):
+    """Read/write table displaying one Device per row.
+
+    Emits :attr:`device_edit_requested` when the user double-clicks a row.
+    """
+
+    device_edit_requested = pyqtSignal(object)  # payload: Device
+
+    def __init__(self, parent=None) -> None:
+        super().__init__(0, len(_COLUMNS), parent)
+        self._devices: list[Device] = []
+        self._setup_table()
+
+    def _setup_table(self) -> None:
+        headers = [col[0] for col in _COLUMNS]
+        self.setHorizontalHeaderLabels(headers)
+        self.setAlternatingRowColors(True)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.setWordWrap(False)
+        self.verticalHeader().setVisible(False)
+        self.horizontalHeader().setStretchLastSection(True)
+        self.horizontalHeader().setSectionResizeMode(
+            2, QHeaderView.ResizeMode.Stretch  # Hostname column stretches
+        )
+        self.setSortingEnabled(True)
+        self.cellDoubleClicked.connect(self._on_double_click)
+
+    def add_device(self, device: Device) -> None:
+        """Append a device row (called from the main thread via queued signal)."""
+        row = self.rowCount()
+        self.insertRow(row)
+        self._devices.append(device)
+        self._populate_row(row, device)
+        self.scrollToBottom()
+
+    def update_device(self, device: Device) -> None:
+        """Refresh the row for *device* after an edit."""
+        for row, d in enumerate(self._devices):
+            if d.id == device.id:
+                self._devices[row] = device
+                self._populate_row(row, device)
+                return
+
+    def clear_devices(self) -> None:
+        """Remove all rows and the internal device list."""
+        self.setRowCount(0)
+        self._devices.clear()
+
+    def get_devices(self) -> list[Device]:
+        """Return the current list of devices shown in the table."""
+        return list(self._devices)
+
+    # ------------------------------------------------------------------
+    # Private helpers
+    # ------------------------------------------------------------------
+
+    def _populate_row(self, row: int, device: Device) -> None:
+        for col, (_, attr) in enumerate(_COLUMNS):
+            if attr == "device_type":
+                text = _TYPE_LABELS.get(device.device_type, device.device_type)
+            elif attr is not None:
+                text = str(getattr(device, attr, "") or "")
+            else:
+                text = ""
+
+            item = QTableWidgetItem(text)
+            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.setItem(row, col, item)
+
+    def _on_double_click(self, row: int, _col: int) -> None:
+        if 0 <= row < len(self._devices):
+            self.device_edit_requested.emit(self._devices[row])

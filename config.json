@@ -1,0 +1,9 @@
+{
+  "default_ip_range": "192.168.1.0/24",
+  "scan_timeout": 2,
+  "max_threads": 50,
+  "default_ports": [22, 80, 135, 161, 443, 3389, 9100],
+  "snmp_community": "public",
+  "log_level": "INFO",
+  "mock_mode": false
+}

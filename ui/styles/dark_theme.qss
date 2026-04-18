@@ -1,0 +1,182 @@
+/* AutoDoku Dark Theme — accent colour: #0078d4 (Windows blue) */
+
+QMainWindow,
+QDialog,
+QWidget {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 13px;
+}
+
+/* ── Toolbar / top bar ─────────────────────────────────────── */
+QFrame#topBar {
+    background-color: #252526;
+    border-bottom: 1px solid #3a3a3a;
+}
+
+/* ── Buttons ───────────────────────────────────────────────── */
+QPushButton {
+    background-color: #0078d4;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 14px;
+    min-width: 80px;
+}
+QPushButton:hover  { background-color: #106ebe; }
+QPushButton:pressed { background-color: #005a9e; }
+QPushButton:disabled { background-color: #3a3a3a; color: #777; }
+
+QPushButton#btnSecondary {
+    background-color: #3a3a3a;
+    color: #e0e0e0;
+}
+QPushButton#btnSecondary:hover { background-color: #4a4a4a; }
+
+/* ── Line edits / combo boxes ──────────────────────────────── */
+QLineEdit,
+QComboBox,
+QSpinBox {
+    background-color: #3c3c3c;
+    color: #e0e0e0;
+    border: 1px solid #555;
+    border-radius: 3px;
+    padding: 4px 6px;
+    selection-background-color: #0078d4;
+}
+QLineEdit:focus,
+QComboBox:focus,
+QSpinBox:focus { border: 1px solid #0078d4; }
+
+QComboBox::drop-down { border: none; }
+QComboBox QAbstractItemView {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+    selection-background-color: #0078d4;
+}
+
+/* ── Check boxes ───────────────────────────────────────────── */
+QCheckBox { spacing: 6px; }
+QCheckBox::indicator {
+    width: 14px;
+    height: 14px;
+    border: 1px solid #666;
+    border-radius: 2px;
+    background-color: #3c3c3c;
+}
+QCheckBox::indicator:checked {
+    background-color: #0078d4;
+    border-color: #0078d4;
+}
+
+/* ── Table ─────────────────────────────────────────────────── */
+QTableWidget {
+    background-color: #252526;
+    alternate-background-color: #2a2a2b;
+    gridline-color: #3a3a3a;
+    selection-background-color: #0078d4;
+    selection-color: #ffffff;
+    border: none;
+}
+QTableWidget::item { padding: 4px 8px; }
+QTableWidget::item:hover { background-color: #2e4f6e; }
+
+QHeaderView::section {
+    background-color: #2d2d2d;
+    color: #cccccc;
+    border: none;
+    border-right: 1px solid #3a3a3a;
+    border-bottom: 1px solid #3a3a3a;
+    padding: 5px 8px;
+    font-weight: bold;
+}
+QHeaderView::section:checked { background-color: #0078d4; color: #fff; }
+
+/* ── Progress bar ──────────────────────────────────────────── */
+QProgressBar {
+    background-color: #2d2d2d;
+    border: 1px solid #444;
+    border-radius: 3px;
+    text-align: center;
+    color: #e0e0e0;
+    height: 18px;
+}
+QProgressBar::chunk {
+    background-color: #0078d4;
+    border-radius: 2px;
+}
+
+/* ── Labels ────────────────────────────────────────────────── */
+QLabel { color: #e0e0e0; }
+QLabel#statusLabel { color: #a0a0a0; font-size: 12px; }
+
+/* ── Group boxes ───────────────────────────────────────────── */
+QGroupBox {
+    border: 1px solid #3a3a3a;
+    border-radius: 4px;
+    margin-top: 12px;
+    color: #a0a0a0;
+    font-size: 12px;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 8px;
+    padding: 0 4px;
+}
+
+/* ── Tabs ──────────────────────────────────────────────────── */
+QTabWidget::pane {
+    border: 1px solid #3a3a3a;
+    background-color: #252526;
+}
+QTabBar::tab {
+    background-color: #2d2d2d;
+    color: #a0a0a0;
+    padding: 6px 16px;
+    border: 1px solid #3a3a3a;
+    border-bottom: none;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+}
+QTabBar::tab:selected { background-color: #252526; color: #e0e0e0; }
+QTabBar::tab:hover    { background-color: #333; }
+
+/* ── Scroll bars ───────────────────────────────────────────── */
+QScrollBar:vertical {
+    background: #1e1e1e;
+    width: 10px;
+    margin: 0;
+}
+QScrollBar::handle:vertical {
+    background: #4a4a4a;
+    border-radius: 4px;
+    min-height: 20px;
+}
+QScrollBar::handle:vertical:hover { background: #666; }
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical { height: 0; }
+
+QScrollBar:horizontal {
+    background: #1e1e1e;
+    height: 10px;
+}
+QScrollBar::handle:horizontal {
+    background: #4a4a4a;
+    border-radius: 4px;
+    min-width: 20px;
+}
+QScrollBar::handle:horizontal:hover { background: #666; }
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal { width: 0; }
+
+/* ── Tool tips ─────────────────────────────────────────────── */
+QToolTip {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+    border: 1px solid #555;
+    padding: 4px;
+}
+
+/* ── Message boxes ─────────────────────────────────────────── */
+QMessageBox { background-color: #252526; }
