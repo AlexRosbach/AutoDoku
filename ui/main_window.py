@@ -1,5 +1,6 @@
 """AutoDoku main application window."""
 from __future__ import annotations
+
 import logging
 from datetime import datetime, timezone
 
@@ -15,6 +16,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QSizePolicy,
+    QStackedWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -24,25 +26,31 @@ from data.models import Device, ScanSession
 from data.session_store import SessionStore
 from export import idoit_csv_exporter
 from ui.device_edit_dialog import DeviceEditDialog
+from ui.device_tile_widget import DeviceTileWidget
+from ui.export_review_dialog import ExportReviewDialog
 from ui.progress_widget import ProgressWidget
 from ui.result_table_widget import ResultTableWidget
 from ui.scan_config_dialog import ScanConfigDialog
 
 logger = logging.getLogger(__name__)
 
+_VIEW_LIST = 0
+_VIEW_TILE = 1
+
 
 class MainWindow(QMainWindow):
-    """Top-level window containing the scan controls, device table and export."""
+    """Top-level window containing the scan controls, device views and export."""
 
     def __init__(self, config: dict) -> None:
         super().__init__()
-        self._config = config
-        self._store = SessionStore()
+        self._config  = config
+        self._store   = SessionStore()
         self._session: ScanSession | None = None
         self._worker: ScanWorker | None = None
+        self._view_mode = _VIEW_LIST
 
         self.setWindowTitle("AutoDoku – Netzwerkscanner")
-        self.resize(1280, 760)
+        self.resize(1280, 780)
         self._build_ui()
         self._load_last_session()
 
@@ -58,7 +66,7 @@ class MainWindow(QMainWindow):
         root.setContentsMargins(12, 12, 12, 12)
 
         root.addWidget(self._build_top_bar())
-        root.addWidget(self._build_table())
+        root.addWidget(self._build_view_stack())
         root.addWidget(self._build_bottom_bar())
 
     def _build_top_bar(self) -> QFrame:
@@ -69,15 +77,13 @@ class MainWindow(QMainWindow):
         layout.setSpacing(10)
 
         layout.addWidget(QLabel("IP-Bereich:"))
-
         self._ip_input = QLineEdit(self._config.get("default_ip_range", "192.168.1.0/24"))
         self._ip_input.setFixedWidth(200)
         layout.addWidget(self._ip_input)
 
-        # Deep-scan checkboxes
-        self._wmi_cb = QCheckBox("WMI")
+        self._wmi_cb  = QCheckBox("WMI")
         self._wmi_cb.setToolTip("WMI-Scan für Windows-Hosts (Credentials erforderlich)")
-        self._ssh_cb = QCheckBox("SSH")
+        self._ssh_cb  = QCheckBox("SSH")
         self._ssh_cb.setToolTip("SSH-Scan für Linux-Hosts (Credentials erforderlich)")
         self._snmp_cb = QCheckBox("SNMP")
         self._snmp_cb.setToolTip("SNMP-Scan für Netzwerkgeräte")
@@ -86,6 +92,22 @@ class MainWindow(QMainWindow):
         layout.addWidget(self._snmp_cb)
 
         layout.addStretch()
+
+        # View toggle
+        self._btn_list = QPushButton("☰ Liste")
+        self._btn_list.setObjectName("btnSecondary")
+        self._btn_list.setCheckable(True)
+        self._btn_list.setChecked(True)
+        self._btn_list.setFixedWidth(80)
+        self._btn_list.clicked.connect(lambda: self._set_view(_VIEW_LIST))
+        layout.addWidget(self._btn_list)
+
+        self._btn_tile = QPushButton("⊞ Kacheln")
+        self._btn_tile.setObjectName("btnSecondary")
+        self._btn_tile.setCheckable(True)
+        self._btn_tile.setFixedWidth(90)
+        self._btn_tile.clicked.connect(lambda: self._set_view(_VIEW_TILE))
+        layout.addWidget(self._btn_tile)
 
         self._config_btn = QPushButton("Konfigurieren")
         self._config_btn.setObjectName("btnSecondary")
@@ -104,10 +126,18 @@ class MainWindow(QMainWindow):
 
         return bar
 
-    def _build_table(self) -> QWidget:
+    def _build_view_stack(self) -> QStackedWidget:
+        self._stack = QStackedWidget()
+
         self._table = ResultTableWidget()
         self._table.device_edit_requested.connect(self._open_device_edit)
-        return self._table
+        self._stack.addWidget(self._table)       # index 0 = LIST
+
+        self._tiles = DeviceTileWidget()
+        self._tiles.device_edit_requested.connect(self._open_device_edit)
+        self._stack.addWidget(self._tiles)       # index 1 = TILE
+
+        return self._stack
 
     def _build_bottom_bar(self) -> QWidget:
         bar = QWidget()
@@ -116,17 +146,25 @@ class MainWindow(QMainWindow):
         layout.setSpacing(10)
 
         self._progress = ProgressWidget()
-        self._progress.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
-        )
+        self._progress.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         layout.addWidget(self._progress)
 
-        self._export_btn = QPushButton("Exportieren (CSV)")
+        self._export_btn = QPushButton("Exportieren (CSV)…")
         self._export_btn.setEnabled(False)
         self._export_btn.clicked.connect(self._export_csv)
         layout.addWidget(self._export_btn)
 
         return bar
+
+    # ------------------------------------------------------------------
+    # View toggle
+    # ------------------------------------------------------------------
+
+    def _set_view(self, mode: int) -> None:
+        self._view_mode = mode
+        self._stack.setCurrentIndex(mode)
+        self._btn_list.setChecked(mode == _VIEW_LIST)
+        self._btn_tile.setChecked(mode == _VIEW_TILE)
 
     # ------------------------------------------------------------------
     # Session persistence
@@ -142,11 +180,11 @@ class MainWindow(QMainWindow):
             self._ip_input.setText(last.ip_range)
             for device in last.devices:
                 self._table.add_device(device)
+                self._tiles.add_device(device)
             self._export_btn.setEnabled(True)
             self._progress.set_progress(
                 100, f"Letzter Scan geladen: {len(last.devices)} Geräte"
             )
-            logger.info("Loaded previous session with %d devices", len(last.devices))
 
     # ------------------------------------------------------------------
     # Scan lifecycle
@@ -159,6 +197,7 @@ class MainWindow(QMainWindow):
             return
 
         self._table.clear_devices()
+        self._tiles.clear_devices()
         self._export_btn.setEnabled(False)
         self._progress.reset()
 
@@ -186,16 +225,15 @@ class MainWindow(QMainWindow):
         self._scan_btn.setEnabled(False)
         self._stop_btn.setEnabled(True)
         self._worker.start()
-        logger.info("Scan started for range %s", ip_range)
 
     def _stop_scan(self) -> None:
         if self._worker and self._worker.isRunning():
             self._worker.abort()
             self._stop_btn.setEnabled(False)
-            self._progress.set_progress(self._progress._bar.value(), "Abbrechen…")
 
     def _on_device_found(self, device: Device) -> None:
         self._table.add_device(device)
+        self._tiles.add_device(device)
 
     def _on_scan_finished(self) -> None:
         self._scan_btn.setEnabled(True)
@@ -211,15 +249,14 @@ class MainWindow(QMainWindow):
         if client_count:
             self._progress.set_progress(
                 100,
-                f"Scan abgeschlossen: {count} Gerät(e) gefunden – "
+                f"Scan abgeschlossen: {count} Gerät(e) — "
                 f"{client_count} Client(s) erkannt. "
-                "Doppelklick auf einen Client um Monitore hinzuzufügen.",
+                "Doppelklick zum Bearbeiten / Monitore hinzufügen.",
             )
         else:
             self._progress.set_progress(
                 100, f"Scan abgeschlossen: {count} Gerät(e) gefunden."
             )
-        logger.info("Scan finished, %d devices in table", count)
 
     def _on_scan_error(self, message: str) -> None:
         self._scan_btn.setEnabled(True)
@@ -236,8 +273,7 @@ class MainWindow(QMainWindow):
             updated = dlg.apply()
             self._store.save_device(updated)
             self._table.update_device(updated)
-
-            # Sync back into the in-memory session
+            self._tiles.update_device(updated)
             if self._session:
                 for i, d in enumerate(self._session.devices):
                     if d.id == updated.id:
@@ -249,20 +285,34 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
 
     def _open_config(self) -> None:
-        dlg = ScanConfigDialog(parent=self)
-        dlg.exec()
+        ScanConfigDialog(parent=self).exec()
 
     # ------------------------------------------------------------------
-    # CSV export
+    # CSV export (with pre-export review dialog)
     # ------------------------------------------------------------------
 
     def _export_csv(self) -> None:
         if not self._session or not self._session.devices:
-            QMessageBox.information(self, "Export", "Keine Daten zum Exportieren vorhanden.")
+            QMessageBox.information(self, "Export", "Keine Daten zum Exportieren.")
             return
 
-        # Sync table devices into session before export
+        # Sync table devices into session
         self._session.devices = self._table.get_devices()
+
+        # Show review dialog
+        review = ExportReviewDialog(self._session.devices, parent=self)
+        if review.exec() != ExportReviewDialog.DialogCode.Accepted:
+            return
+
+        reviewed_devices = review.get_devices()
+
+        # Save any edits the user made in the review dialog
+        for device in reviewed_devices:
+            self._store.save_device(device)
+            self._table.update_device(device)
+            self._tiles.update_device(device)
+
+        self._session.devices = reviewed_devices
 
         path, _ = QFileDialog.getSaveFileName(
             self,
@@ -280,7 +330,6 @@ class MainWindow(QMainWindow):
                 "Export erfolgreich",
                 f"{count} Gerät(e) wurden nach\n{path}\nexportiert.",
             )
-            logger.info("CSV export complete: %d rows to %s", count, path)
         except OSError as exc:
             QMessageBox.critical(self, "Export-Fehler", str(exc))
             logger.error("CSV export failed: %s", exc)

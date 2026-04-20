@@ -4,7 +4,12 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
-      "Bash(gh pr create --title 'Portable EXE: Scapy/nmap entfernt, build.bat hinzugefügt' --body ' *)"
+      "Bash(gh pr create --title 'Portable EXE: Scapy/nmap entfernt, build.bat hinzugefügt' --body ' *)",
+      "Read(//c/Program Files/**)",
+      "Read(//c/Users/arosbach/scoop/**)",
+      "Bash(git remote *)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\('html_url', d.get\\('message',''\\)\\)\\)\")",
+      "WebFetch(domain:github.com)"
     ]
   }
 }

@@ -1,16 +1,28 @@
-"""Host discovery via concurrent ICMP ping and Windows ARP cache.
+"""ARP-based host discovery using the Windows SendARP API.
 
-Replaces the previous Scapy/Npcap approach.  No external drivers or binaries
-required – only standard library (subprocess, ipaddress, concurrent.futures).
+Calls iphlpapi.dll!SendARP via ctypes – no subprocess spawning,
+no Npcap/WinPcap driver, no administrator privileges required.
+SendARP sends a single ARP broadcast per IP and returns the MAC address
+directly, giving us host liveness + MAC address in one call.
 """
 from __future__ import annotations
+
+import ctypes
 import ipaddress
 import logging
-import re
-import subprocess
+import socket
+import struct
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = logging.getLogger(__name__)
+
+# Windows IPHLPAPI
+try:
+    _iphlpapi = ctypes.windll.iphlpapi
+    _SENDARP_AVAILABLE = True
+except (AttributeError, OSError):
+    _SENDARP_AVAILABLE = False
+    logger.warning("iphlpapi not available – running on non-Windows?")
 
 MOCK_HOSTS: list[dict[str, str]] = [
     {"ip": "192.168.1.1",  "mac": "aa:bb:cc:dd:ee:01"},
@@ -20,20 +32,19 @@ MOCK_HOSTS: list[dict[str, str]] = [
     {"ip": "192.168.1.40", "mac": "aa:bb:cc:dd:ee:05"},
 ]
 
-_MAC_RE = re.compile(
-    r'([0-9a-fA-F]{2}[-:][0-9a-fA-F]{2}[-:][0-9a-fA-F]{2}'
-    r'[-:][0-9a-fA-F]{2}[-:][0-9a-fA-F]{2}[-:][0-9a-fA-F]{2})'
-)
-
-_MAX_WORKERS = 100
+_MAX_WORKERS = 128
 
 
 def sweep(ip_range: str, timeout: int = 2) -> list[dict[str, str]]:
-    """Discover live hosts in *ip_range* (CIDR) and return {ip, mac} list.
+    """Discover live hosts in *ip_range* (CIDR) via ARP.
 
-    Uses concurrent ICMP ping to find responsive hosts, then reads their MAC
-    addresses from the Windows ARP cache.
+    Returns a list of ``{ip, mac}`` dicts for every host that responds.
+    Works on the local broadcast domain (same subnet / VLAN).
     """
+    if not _SENDARP_AVAILABLE:
+        logger.error("SendARP not available on this platform")
+        return []
+
     try:
         network = ipaddress.ip_network(ip_range, strict=False)
     except ValueError:
@@ -41,21 +52,21 @@ def sweep(ip_range: str, timeout: int = 2) -> list[dict[str, str]]:
         return []
 
     hosts = [str(ip) for ip in network.hosts()]
-    timeout_ms = max(500, timeout * 1000)
-    logger.info(
-        "Starting ping sweep of %s (%d hosts, timeout=%dms)",
-        ip_range, len(hosts), timeout_ms,
-    )
+    logger.info("ARP sweep %s: probing %d addresses", ip_range, len(hosts))
 
-    alive: list[str] = []
+    results: list[dict[str, str]] = []
     with ThreadPoolExecutor(max_workers=min(_MAX_WORKERS, len(hosts))) as pool:
-        futures = {pool.submit(_ping, ip, timeout_ms): ip for ip in hosts}
+        futures = {pool.submit(_send_arp, ip): ip for ip in hosts}
         for future in as_completed(futures):
-            if future.result():
-                alive.append(futures[future])
+            ip = futures[future]
+            try:
+                mac = future.result()
+            except Exception:
+                mac = None
+            if mac:
+                results.append({"ip": ip, "mac": mac})
 
-    results = [{"ip": ip, "mac": _get_mac(ip)} for ip in alive]
-    logger.info("Ping sweep found %d host(s)", len(results))
+    logger.info("ARP sweep found %d host(s)", len(results))
     return results
 
 
@@ -69,31 +80,31 @@ def sweep_mock() -> list[dict[str, str]]:
 # Private helpers
 # ---------------------------------------------------------------------------
 
-def _ping(ip: str, timeout_ms: int) -> bool:
-    """Return True if *ip* responds to a single ICMP echo request."""
-    try:
-        result = subprocess.run(
-            ["ping", "-n", "1", "-w", str(timeout_ms), ip],
-            capture_output=True,
-            timeout=timeout_ms / 1000 + 3,
-        )
-        return result.returncode == 0
-    except Exception:
-        return False
+def _send_arp(ip: str) -> str | None:
+    """Call SendARP for *ip* and return the MAC address, or None on failure.
 
-
-def _get_mac(ip: str) -> str:
-    """Read the MAC address for *ip* from the Windows ARP cache."""
+    SendARP (iphlpapi.dll) sends an ARP request on the local network and
+    blocks until either a reply arrives or the internal timeout expires.
+    No raw sockets, no Npcap, no elevated privileges required.
+    """
     try:
-        result = subprocess.run(
-            ["arp", "-a", ip],
-            capture_output=True,
-            text=True,
-            timeout=3,
+        # Convert dotted-quad to 32-bit integer in native byte order,
+        # which is the format Windows IPAddr (DWORD) expects.
+        dest_int = struct.unpack("I", socket.inet_aton(ip))[0]
+
+        mac_buf = (ctypes.c_ubyte * 8)()   # 8 bytes; MAC occupies first 6
+        mac_len = ctypes.c_ulong(8)
+
+        ret = _iphlpapi.SendARP(
+            dest_int,              # DestIP
+            0,                     # SrcIP  (0 = use primary interface)
+            mac_buf,               # pMacAddr
+            ctypes.byref(mac_len), # PhyAddrLen (in/out)
         )
-        match = _MAC_RE.search(result.stdout)
-        if match:
-            return match.group(0).replace("-", ":").lower()
-    except Exception:
-        pass
-    return "unknown"
+
+        if ret == 0 and mac_len.value >= 6:   # ERROR_SUCCESS
+            return ":".join(f"{mac_buf[i]:02x}" for i in range(6))
+        return None
+    except Exception as exc:
+        logger.debug("SendARP %s failed: %s", ip, exc)
+        return None
