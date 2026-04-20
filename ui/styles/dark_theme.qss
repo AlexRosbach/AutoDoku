@@ -180,3 +180,20 @@ QToolTip {
 
 /* ── Message boxes ─────────────────────────────────────────── */
 QMessageBox { background-color: #252526; }
+
+/* ── Device cards (tile view) ──────────────────────────────── */
+QFrame#deviceCard {
+    background-color: #2d2d2d;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+}
+QFrame#deviceCard:hover {
+    border: 1px solid #0078d4;
+    background-color: #2e3f52;
+}
+
+/* ── View-toggle buttons (checked state) ───────────────────── */
+QPushButton#btnSecondary:checked {
+    background-color: #0078d4;
+    color: #ffffff;
+}

@@ -1,6 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 # PyInstaller spec for AutoDoku portable one-file EXE
-# Build with: pyinstaller autodoku.spec  (or run build.bat)
+# Build with: build.bat  (or: pyinstaller autodoku.spec)
 
 a = Analysis(
     ['main.py'],
@@ -42,8 +42,11 @@ a = Analysis(
         'keyring.backends',
         'keyring.backends.Windows',
         'keyring.backends.fail',
+        # OUI vendor lookup
+        'manuf',
+        'manuf.manuf',
     ],
-    hookspath=[],
+    hookspath=['hooks'],   # picks up hooks/hook-manuf.py
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
