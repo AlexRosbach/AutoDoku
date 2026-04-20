@@ -2,7 +2,7 @@
 
 Sets up logging, loads config and the dark-mode stylesheet, then launches the
 PyQt6 main window.  Works both as a plain Python script and as a PyInstaller
-one-file bundle (sys.frozen detection ensures correct path resolution).
+one-file bundle (sys.frozen / sys._MEIPASS detection ensures correct paths).
 """
 
 import json
@@ -19,16 +19,24 @@ from ui.main_window import MainWindow
 # ---------------------------------------------------------------------------
 
 def _base_dir() -> Path:
-    """Return the directory that contains config.json and autodoku.log."""
+    """Directory next to the EXE (or project root in dev mode).
+
+    Used for user-writable files: autodoku.log, autodoku.db, config.json
+    override.
+    """
     if getattr(sys, "frozen", False):
         return Path(sys.executable).parent
     return Path(__file__).resolve().parent
 
 
 def _resource_dir() -> Path:
-    """Return the directory that contains bundled assets (e.g. QSS file)."""
-    if getattr(sys, "frozen", False):
-        return Path(sys.executable).parent
+    """Directory containing bundled read-only assets (QSS, default config).
+
+    In a PyInstaller onefile bundle, assets are extracted to sys._MEIPASS.
+    In dev mode this is the same as _base_dir().
+    """
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        return Path(sys._MEIPASS)
     return Path(__file__).resolve().parent
 
 
@@ -48,11 +56,9 @@ def _setup_logging(level: str = "INFO") -> None:
         ],
     )
     logging.getLogger("paramiko").setLevel(logging.WARNING)
-    logging.getLogger("scapy").setLevel(logging.WARNING)
 
 
 def _load_config() -> dict:
-    config_path = _base_dir() / "config.json"
     defaults: dict = {
         "default_ip_range": "192.168.1.0/24",
         "scan_timeout": 2,
@@ -62,17 +68,21 @@ def _load_config() -> dict:
         "log_level": "INFO",
         "mock_mode": False,
     }
-    try:
-        with config_path.open("r", encoding="utf-8") as fh:
-            loaded = json.load(fh)
-            defaults.update(loaded)
+    # Try user-editable override next to EXE first, then bundled default.
+    candidates = [_base_dir() / "config.json", _resource_dir() / "config.json"]
+    for config_path in candidates:
+        try:
+            with config_path.open("r", encoding="utf-8") as fh:
+                loaded = json.load(fh)
+                defaults.update(loaded)
+                return defaults
+        except FileNotFoundError:
+            continue
+        except json.JSONDecodeError as exc:
+            logging.warning("config.json is malformed (%s) – using defaults", exc)
             return defaults
-    except FileNotFoundError:
-        logging.warning("config.json not found – using defaults")
-        return defaults
-    except json.JSONDecodeError as exc:
-        logging.warning("config.json is malformed (%s) – using defaults", exc)
-        return defaults
+    logging.warning("config.json not found – using defaults")
+    return defaults
 
 
 def _load_stylesheet() -> str:
