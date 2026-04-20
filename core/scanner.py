@@ -164,7 +164,18 @@ class ScanWorker(QThread):
         if self._use_ssh and 22 in ports and 135 not in ports:
             creds = get_credentials(SERVICE_SSH)
             if creds:
-                data = ssh_connector.scan(device.ip, *creds)
+                # Credentials are stored as "user|/path/to/key" or just "user"
+                raw_user, password = creds
+                if "|" in raw_user:
+                    username, key_path = raw_user.split("|", 1)
+                else:
+                    username, key_path = raw_user, None
+                data = ssh_connector.scan(
+                    device.ip,
+                    username,
+                    password=password or None,
+                    key_path=key_path or None,
+                )
                 _apply_dict(device, data)
 
         # SNMP (network gear)
