@@ -200,9 +200,25 @@ class MainWindow(QMainWindow):
     def _on_scan_finished(self) -> None:
         self._scan_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)
-        count = len(self._table.get_devices())
+        devices = self._table.get_devices()
+        count = len(devices)
         if count > 0:
             self._export_btn.setEnabled(True)
+
+        client_count = sum(
+            1 for d in devices if d.device_type == "C__OBJTYPE__CLIENT"
+        )
+        if client_count:
+            self._progress.set_progress(
+                100,
+                f"Scan abgeschlossen: {count} Gerät(e) gefunden – "
+                f"{client_count} Client(s) erkannt. "
+                "Doppelklick auf einen Client um Monitore hinzuzufügen.",
+            )
+        else:
+            self._progress.set_progress(
+                100, f"Scan abgeschlossen: {count} Gerät(e) gefunden."
+            )
         logger.info("Scan finished, %d devices in table", count)
 
     def _on_scan_error(self, message: str) -> None:
