@@ -1,47 +1,49 @@
-"""TCP port scanner wrapping the nmap command-line tool via python-nmap.
+"""Pure Python TCP port scanner – no external binary required.
 
-Note: the nmap binary must be installed on the target machine and available
-on PATH.  It cannot be bundled inside the portable EXE.
+Replaces the previous python-nmap wrapper.  Uses concurrent socket connect
+attempts, which works without Npcap or administrator privileges.
 """
 from __future__ import annotations
 import logging
-
-import nmap
+import socket
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_PORTS: list[int] = [22, 80, 135, 161, 443, 3389, 9100]
+CONNECT_TIMEOUT = 0.5  # seconds per port probe
 
 
 def scan_ports(ip: str, ports: list[int] | None = None) -> list[int]:
-    """Scan *ip* for open TCP ports and return the open ones.
+    """Return the subset of *ports* that have an open TCP listener on *ip*.
 
     Args:
         ip:    Target IP address as string.
-        ports: List of port numbers to probe; defaults to DEFAULT_PORTS.
+        ports: Port numbers to probe; defaults to DEFAULT_PORTS.
 
     Returns:
-        List of port numbers found open on the host.
+        Sorted list of port numbers found open.
     """
     target_ports = ports or DEFAULT_PORTS
-    port_str = ",".join(str(p) for p in target_ports)
-
-    nm = nmap.PortScanner()
-    try:
-        # -T4 for faster timing, --open to suppress closed/filtered output
-        nm.scan(hosts=ip, ports=port_str, arguments="-T4 --open")
-    except nmap.PortScannerError as exc:
-        logger.error("nmap scan failed for %s: %s", ip, exc)
-        return []
-
     open_ports: list[int] = []
-    if ip not in nm.all_hosts():
-        return open_ports
 
-    for proto in nm[ip].all_protocols():
-        for port, state_info in nm[ip][proto].items():
-            if state_info.get("state") == "open":
-                open_ports.append(port)
+    with ThreadPoolExecutor(max_workers=len(target_ports)) as pool:
+        futures = {pool.submit(_check_port, ip, p): p for p in target_ports}
+        for future in as_completed(futures):
+            port = futures[future]
+            try:
+                if future.result():
+                    open_ports.append(port)
+            except Exception as exc:
+                logger.debug("Port check error %s:%d: %s", ip, port, exc)
 
+    open_ports.sort()
     logger.debug("Port scan %s: open ports %s", ip, open_ports)
     return open_ports
+
+
+def _check_port(ip: str, port: int) -> bool:
+    """Return True if a TCP connection to *ip*:*port* succeeds."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(CONNECT_TIMEOUT)
+        return s.connect_ex((ip, port)) == 0
