@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#003366"/>
+      <stop offset="100%" stop-color="#0078d4"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#00000040"/>
+    </filter>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="256" height="256" rx="44" fill="url(#bgGrad)"/>
+
+  <!-- Subtle grid pattern -->
+  <line x1="0" y1="85" x2="256" y2="85" stroke="white" stroke-width="0.5" opacity="0.08"/>
+  <line x1="0" y1="170" x2="256" y2="170" stroke="white" stroke-width="0.5" opacity="0.08"/>
+  <line x1="85" y1="0" x2="85" y2="256" stroke="white" stroke-width="0.5" opacity="0.08"/>
+  <line x1="170" y1="0" x2="170" y2="256" stroke="white" stroke-width="0.5" opacity="0.08"/>
+
+  <!-- Network: connection lines first (behind nodes) -->
+  <line x1="128" y1="86" x2="128" y2="60" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.65"/>
+  <line x1="107" y1="116" x2="78"  y2="148" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.65"/>
+  <line x1="149" y1="116" x2="178" y2="148" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.65"/>
+
+  <!-- Center hub node -->
+  <circle cx="128" cy="104" r="22" fill="white" opacity="0.95" filter="url(#shadow)"/>
+  <circle cx="128" cy="104" r="13" fill="#0078d4"/>
+  <circle cx="128" cy="104" r="5"  fill="white"/>
+
+  <!-- Left leaf node -->
+  <circle cx="66"  cy="158" r="14" fill="white" opacity="0.90" filter="url(#shadow)"/>
+  <circle cx="66"  cy="158" r="7"  fill="#0078d4"/>
+  <circle cx="66"  cy="158" r="2.5" fill="white"/>
+
+  <!-- Right leaf node -->
+  <circle cx="190" cy="158" r="14" fill="white" opacity="0.90" filter="url(#shadow)"/>
+  <circle cx="190" cy="158" r="7"  fill="#0078d4"/>
+  <circle cx="190" cy="158" r="2.5" fill="white"/>
+
+  <!-- Top small node -->
+  <circle cx="128" cy="50"  r="9"  fill="white" opacity="0.80"/>
+  <circle cx="128" cy="50"  r="4"  fill="#0062b0"/>
+
+  <!-- Document / list representation -->
+  <rect x="72" y="186" width="112" height="46" rx="7"
+        fill="white" opacity="0.12" stroke="white" stroke-width="1.5" opacity="0.40"/>
+  <!-- Document lines -->
+  <line x1="88"  y1="199" x2="168" y2="199" stroke="white" stroke-width="3"   stroke-linecap="round" opacity="0.90"/>
+  <line x1="88"  y1="211" x2="154" y2="211" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.70"/>
+  <line x1="88"  y1="222" x2="138" y2="222" stroke="white" stroke-width="2"   stroke-linecap="round" opacity="0.50"/>
+</svg>
