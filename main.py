@@ -10,6 +10,7 @@ import logging
 import sys
 from pathlib import Path
 
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 
 from ui.main_window import MainWindow
@@ -108,6 +109,11 @@ def main() -> None:
     app = QApplication(sys.argv)
     app.setApplicationName("AutoDoku")
     app.setOrganizationName("AutoDoku")
+
+    # App icon (SVG works on all platforms via Qt's SVG support)
+    icon_path = _resource_dir() / "ui" / "assets" / "autodoku.svg"
+    if icon_path.exists():
+        app.setWindowIcon(QIcon(str(icon_path)))
 
     stylesheet = _load_stylesheet()
     if stylesheet:
