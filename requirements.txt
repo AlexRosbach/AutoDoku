@@ -4,4 +4,5 @@ pywin32>=306; sys_platform=="win32"
 paramiko>=3.4.0
 pysnmp>=6.1.0
 keyring>=24.3.0
+manuf>=1.1.5
 pyinstaller>=6.3.0
