@@ -88,6 +88,7 @@ class Device:
     department:   str = ""          # Abteilung
     contact:      str = ""          # Ansprechpartner
     inventory_no: str = ""          # Inventarnummer
+    sysid:        str = ""          # i-doit Sysid (update-key for CSV import)
     notes:        str = ""
     # ── Internal ──────────────────────────────────────────────────────
     scan_status:  str = ScanStatus.PENDING.value

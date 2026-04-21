@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS devices (
     department   TEXT,
     contact      TEXT,
     inventory_no TEXT,
+    sysid        TEXT,
     notes        TEXT,
     scan_status  TEXT,
     raw_data     TEXT,
@@ -66,6 +67,7 @@ _DEVICE_MIGRATIONS: list[str] = [
     "room         TEXT DEFAULT ''",
     "contact      TEXT DEFAULT ''",
     "inventory_no TEXT DEFAULT ''",
+    "sysid        TEXT DEFAULT ''",
 ]
 
 
@@ -146,15 +148,15 @@ class SessionStore:
         sql = """INSERT OR REPLACE INTO devices
             (id, session_id, ip, mac, hostname, device_type, os, manufacturer,
              model, serial, ram_gb, cpu, cmdb_status, location, room, department,
-             contact, inventory_no, notes, scan_status, raw_data)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"""
+             contact, inventory_no, sysid, notes, scan_status, raw_data)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"""
         with self._lock:
             self._conn.execute(sql, (
                 device.id, device.session_id, device.ip, device.mac,
                 device.hostname, device.device_type, device.os, device.manufacturer,
                 device.model, device.serial, device.ram_gb, device.cpu,
                 device.cmdb_status, device.location, device.room, device.department,
-                device.contact, device.inventory_no, device.notes,
+                device.contact, device.inventory_no, device.sysid, device.notes,
                 device.scan_status, device.raw_data,
             ))
             self._conn.commit()
@@ -175,7 +177,8 @@ class SessionStore:
                 cmdb_status=r["cmdb_status"] or "",
                 location=r["location"] or "", room=r["room"] or "",
                 department=r["department"] or "", contact=r["contact"] or "",
-                inventory_no=r["inventory_no"] or "", notes=r["notes"] or "",
+                inventory_no=r["inventory_no"] or "",
+                sysid=r["sysid"] or "", notes=r["notes"] or "",
                 scan_status=r["scan_status"] or ScanStatus.DONE.value,
                 raw_data=r["raw_data"] or "",
             )
