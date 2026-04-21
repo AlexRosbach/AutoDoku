@@ -95,16 +95,45 @@ def _do_wmi_scan(ip: str, username: str, password: str) -> dict[str, object]:
             except (TypeError, ValueError):
                 pass
 
+        # RAM: prefer TotalPhysicalMemory from ComputerSystem (bytes) over
+        # PhysicalMemoryArray.MaxCapacity (KB) which often returns incorrect values
+        try:
+            total_bytes = int(cs_info.TotalPhysicalMemory or 0)
+            if total_bytes > 0:
+                ram_gb = max(1, round(total_bytes / (1024 ** 3)))
+        except (TypeError, ValueError):
+            pass  # keep value from PhysicalMemoryArray if already set
+
+        # Build a clean OS string: Caption + SP (e.g. "Windows 11 Pro")
+        os_caption = str(os_info.Caption or "").strip()
+        os_sp      = str(os_info.ServicePackMajorVersion or "").strip()
+        os_str     = os_caption
+        if os_sp and os_sp != "0":
+            os_str = f"{os_caption} SP{os_sp}"
+
+        # Filter out generic OEM placeholders in manufacturer/model
+        _GENERIC = {"to be filled by o.e.m.", "system manufacturer", "system product name",
+                    "none", "n/a", ""}
+        manufacturer = str(cs_info.Manufacturer or "").strip()
+        model        = str(cs_info.Model or "").strip()
+        if manufacturer.lower() in _GENERIC:
+            manufacturer = ""
+        if model.lower() in _GENERIC:
+            model = ""
+
         result = {
             "hostname":     str(cs_info.Name or "").strip(),
-            "os":           str(os_info.Caption or "").strip(),
+            "os":           os_str,
             "ram_gb":       ram_gb,
             "cpu":          str(proc_info.Name or "").strip(),
             "serial":       str(bios_info.SerialNumber or "").strip(),
-            "manufacturer": str(cs_info.Manufacturer or "").strip(),
-            "model":        str(cs_info.Model or "").strip(),
+            "manufacturer": manufacturer,
+            "model":        model,
         }
-        logger.info("WMI scan succeeded for %s (host: %s)", ip, result.get("hostname"))
+        logger.info(
+            "WMI scan succeeded for %s (host: %s, OS: %s, RAM: %s GB)",
+            ip, result.get("hostname"), result.get("os"), result.get("ram_gb"),
+        )
         return result
 
     except Exception as exc:

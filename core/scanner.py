@@ -23,6 +23,7 @@ from datetime import datetime, timezone
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from core import arp_sweep, device_classifier, port_scanner, vendor_lookup
+from core.device_classifier import reclassify_from_scan
 from core import snmp_connector, ssh_connector, wmi_connector
 from data.credential_store import (
     SERVICE_SNMP,
@@ -192,6 +193,7 @@ class ScanWorker(QThread):
                             "WMI succeeded on %s with credential set %d", device.ip, idx
                         )
                         _apply_dict(device, data)
+                        reclassify_from_scan(device)
                         break
                     logger.debug(
                         "WMI credential set %d failed for %s – %s",
@@ -231,6 +233,7 @@ class ScanWorker(QThread):
                             "SSH succeeded on %s with credential set %d", device.ip, idx
                         )
                         _apply_dict(device, data)
+                        reclassify_from_scan(device)
                         break
                     logger.debug(
                         "SSH credential set %d failed for %s – %s",
