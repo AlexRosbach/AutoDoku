@@ -21,10 +21,11 @@ class ScanStatus(str, Enum):
 class DeviceType(str, Enum):
     """i-doit object-type constants used as device classification values."""
 
-    CLIENT = "C__OBJTYPE__CLIENT"
-    SERVER = "C__OBJTYPE__SERVER"
+    CLIENT  = "C__OBJTYPE__CLIENT"
+    SERVER  = "C__OBJTYPE__SERVER"
     PRINTER = "C__OBJTYPE__PRINTER"
-    SWITCH = "C__OBJTYPE__SWITCH"
+    SWITCH  = "C__OBJTYPE__SWITCH"
+    ROUTER  = "C__OBJTYPE__ROUTER"
     UNKNOWN = "C__OBJTYPE__DEVICE"
     MONITOR = "C__OBJTYPE__MONITOR"
 
