@@ -7,8 +7,9 @@ a = Analysis(
     pathex=['.'],
     binaries=[],
     datas=[
-        ('config.json',              '.'),
-        ('ui/styles/dark_theme.qss', 'ui/styles'),
+        ('config.json',                   '.'),
+        ('ui/styles/dark_theme.qss',      'ui/styles'),
+        ('ui/assets/autodoku.svg',        'ui/assets'),
     ],
     hiddenimports=[
         # Windows / COM
