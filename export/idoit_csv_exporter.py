@@ -21,8 +21,11 @@ logger = logging.getLogger(__name__)
 CSV_SEPARATOR = ";"
 CSV_ENCODING  = "utf-8-sig"   # BOM prefix → Excel opens correctly without encoding issues
 
-# Column headers as expected by i-doit's CSV import
+# Column headers as expected by i-doit's CSV import.
+# "Sysid" is placed FIRST: when populated, i-doit uses it as the lookup key
+# to UPDATE an existing CMDB object instead of creating a new one.
 IDOIT_COLUMNS: list[str] = [
+    "Sysid",          # i-doit internal ID – empty = create new; filled = update
     "Objekt-Typ",
     "Bezeichnung",
     "IP-Adresse",
@@ -90,6 +93,7 @@ def export(
 def _device_to_row(device: Device) -> list[str]:
     """Convert a Device dataclass instance to a CSV row."""
     return [
+        device.sysid or "",          # Sysid – update key for i-doit import
         device.device_type or "",
         device.hostname or device.ip or "",
         device.ip or "",
@@ -119,6 +123,7 @@ def _peripheral_to_row(periph: Peripheral, parent: Device) -> list[str]:
     obj_type = _PERIPHERAL_OBJTYPE.get(periph.peripheral_type, "C__OBJTYPE__OBJECT")
     label = " ".join(filter(None, [periph.manufacturer, periph.model])) or periph.peripheral_type
     return [
+        "",   # Sysid – peripherals are always new objects
         obj_type,
         label,
         "",   # IP

@@ -76,6 +76,7 @@ _COLS: list[tuple[str, str | None, bool, int, bool]] = [
     ("Abteilung",    "department",   True,  110, False),
     ("Ansprechp.",   "contact",      True,  110, False),
     ("CMDB-Status",  "cmdb_status",  True,  110, True),   # ComboBox
+    ("Sysid",        "sysid",        True,   90, False),  # i-doit update key
     ("Notizen",      "notes",        True,  180, False),
 ]
 

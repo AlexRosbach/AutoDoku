@@ -168,6 +168,7 @@ class DeviceEditDialog(QDialog):
         # All other text fields
         field_defs = [
             ("inventory_no", "Inventarnummer:",  "z. B. IT-2024-001"),
+            ("sysid",        "Sysid (i-doit):",  "i-doit Objekt-ID – beim Import zum Aktualisieren"),
             ("serial",       "Seriennummer:",    ""),
             ("location",     "Standort:",        "z. B. Gebäude A"),
             ("room",         "Raum:",            "z. B. 2.15"),
