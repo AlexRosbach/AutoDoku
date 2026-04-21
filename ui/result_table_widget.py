@@ -176,12 +176,16 @@ class ResultTableWidget(QTableWidget):
 
     def add_device(self, device: Device) -> None:
         self._block_signals = True
+        # Disable sorting during row insertion: with sorting enabled Qt re-orders
+        # rows mid-population, causing setItem(row, col) to target wrong cells.
+        self.setSortingEnabled(False)
         self._devices[device.id] = device
         self._order.append(device.id)
         row = self.rowCount()
         self.insertRow(row)
         suggestions = suggest(device)
         self._populate_row(row, device, suggestions)
+        self.setSortingEnabled(True)
         self.scrollToBottom()
         self._block_signals = False
 
@@ -194,6 +198,7 @@ class ResultTableWidget(QTableWidget):
         if row < 0:
             return
         self._block_signals = True
+        self.setSortingEnabled(False)
         suggestions = suggest(device)
         for col, (_, field, editable, _, _) in enumerate(_COLS):
             if field is None:
@@ -202,6 +207,7 @@ class ResultTableWidget(QTableWidget):
             if item and item.data(_ROLE_USER_EDIT):
                 continue   # user already edited this cell – leave it alone
             self._set_cell(row, col, device, field, editable, suggestions)
+        self.setSortingEnabled(True)
         self._block_signals = False
 
     def clear_devices(self) -> None:
@@ -325,8 +331,9 @@ class ResultTableWidget(QTableWidget):
     # ------------------------------------------------------------------
 
     def _on_double_click(self, row: int, _col: int) -> None:
-        if row < len(self._order):
-            did = self._order[row]
+        # Read device_id from the item's custom role (works regardless of sort order)
+        did = self._device_id_at_row(row)
+        if did:
             device = self._devices.get(did)
             if device:
                 self.device_edit_requested.emit(device)
@@ -335,8 +342,31 @@ class ResultTableWidget(QTableWidget):
     # Helpers
     # ------------------------------------------------------------------
 
+    def _device_id_at_row(self, row: int) -> str | None:
+        """Return the device ID stored in any non-status cell of *row*."""
+        # IP column always carries _ROLE_DEVICE_ID and is never None
+        ip_col = next((i for i, c in enumerate(_COLS) if c[1] == "ip"), 2)
+        item = self.item(row, ip_col)
+        if item:
+            return item.data(_ROLE_DEVICE_ID)
+        # Fallback: scan other columns
+        for col in range(self.columnCount()):
+            item = self.item(row, col)
+            if item:
+                did = item.data(_ROLE_DEVICE_ID)
+                if did:
+                    return did
+        return None
+
     def _row_for(self, device_id: str) -> int:
-        try:
-            return self._order.index(device_id)
-        except ValueError:
-            return -1
+        """Find the current visual row for *device_id* by scanning _ROLE_DEVICE_ID.
+
+        This is correct even after the user sorts the table, unlike using
+        _order.index() which only reflects insertion order.
+        """
+        ip_col = next((i for i, c in enumerate(_COLS) if c[1] == "ip"), 2)
+        for row in range(self.rowCount()):
+            item = self.item(row, ip_col)
+            if item and item.data(_ROLE_DEVICE_ID) == device_id:
+                return row
+        return -1
