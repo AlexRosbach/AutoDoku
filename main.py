@@ -14,6 +14,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 
 from ui.main_window import MainWindow
+from version import __version__, __app_name__
 
 # ---------------------------------------------------------------------------
 # Path helpers (frozen-EXE-aware)
@@ -104,7 +105,7 @@ def main() -> None:
     _setup_logging(config.get("log_level", "INFO"))
 
     logger = logging.getLogger(__name__)
-    logger.info("AutoDoku starting (Python %s)", sys.version.split()[0])
+    logger.info("%s %s starting (Python %s)", __app_name__, __version__, sys.version.split()[0])
 
     app = QApplication(sys.argv)
     app.setApplicationName("AutoDoku")

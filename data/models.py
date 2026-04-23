@@ -1,8 +1,9 @@
 """Data model definitions for AutoDoku.
 
-Device  – a discovered network device (client, server, switch, printer, …)
-Peripheral – any device attached to a Client (monitor, keyboard, mouse, …)
-ScanSession – groups all Device records from one scan run.
+Device      – a discovered network device (client, server, switch, printer, …)
+              Peripherals are stored directly on the device (no database needed).
+Peripheral  – any device attached to a Client (monitor, keyboard, mouse, …)
+ScanSession – lightweight in-memory container grouping devices from one scan.
 """
 from __future__ import annotations
 
@@ -29,6 +30,7 @@ class DeviceType(str, Enum):
     MONITOR = "C__OBJTYPE__MONITOR"
 
 
+# Human-readable labels used in the UI AND in the CSV export (i-doit prefers these)
 DEVICE_TYPE_LABELS: dict[str, str] = {
     DeviceType.CLIENT.value:  "Client",
     DeviceType.SERVER.value:  "Server",
@@ -62,10 +64,34 @@ PERIPHERAL_TYPES: list[str] = [
     "Sonstiges",
 ]
 
+# i-doit object type labels for peripheral types (used in CSV export)
+PERIPHERAL_IDOIT_TYPE: dict[str, str] = {
+    "Monitor":         "Monitor",
+    "Drucker (lokal)": "Drucker",
+    "Telefon / VoIP":  "Telefon",
+}
+
+
+@dataclass
+class Peripheral:
+    """A peripheral device attached to a Client (monitor, keyboard, …)."""
+
+    id:              str = field(default_factory=lambda: str(uuid.uuid4()))
+    device_id:       str = ""
+    peripheral_type: str = "Monitor"
+    manufacturer:    str = ""
+    model:           str = ""
+    serial:          str = ""
+    notes:           str = ""
+    is_suggestion:   bool = False   # True = auto-suggested, not yet confirmed by user
+
 
 @dataclass
 class Device:
-    """A single network device discovered during a scan session."""
+    """A single network device discovered during a scan session.
+
+    Peripherals are stored directly on the device object (no database).
+    """
 
     id:           str = field(default_factory=lambda: str(uuid.uuid4()))
     session_id:   str = ""
@@ -88,28 +114,18 @@ class Device:
     department:   str = ""          # Abteilung
     contact:      str = ""          # Ansprechpartner
     inventory_no: str = ""          # Inventarnummer
-    sysid:        str = ""          # i-doit Sysid (update-key for CSV import)
+    sysid:        str = ""          # i-doit Sysid (update-key for CSV re-import)
     notes:        str = ""
+    # ── Attached peripherals (in-memory, not persisted) ───────────────
+    peripherals:  list[Peripheral] = field(default_factory=list)
     # ── Internal ──────────────────────────────────────────────────────
     scan_status:  str = ScanStatus.PENDING.value
     raw_data:     str = ""
 
 
 @dataclass
-class Peripheral:
-    """A peripheral device attached to a Client (monitor, keyboard, …)."""
-
-    id:              str = field(default_factory=lambda: str(uuid.uuid4()))
-    device_id:       str = ""
-    peripheral_type: str = "Monitor"
-    manufacturer:    str = ""
-    model:           str = ""
-    serial:          str = ""
-    notes:           str = ""
-
-
-@dataclass
 class ScanSession:
+    """In-memory container for a scan run (no database backing)."""
     id:         str = field(default_factory=lambda: str(uuid.uuid4()))
     created_at: str = ""
     ip_range:   str = ""

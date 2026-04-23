@@ -31,8 +31,7 @@ from data.credential_store import (
     SERVICE_WMI,
     get_credentials_list,
 )
-from data.models import Device, ScanSession, ScanStatus
-from data.session_store import SessionStore
+from data.models import Device, DeviceType, Peripheral, ScanSession, ScanStatus
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +66,6 @@ class ScanWorker(QThread):
         self._use_wmi  = use_wmi
         self._use_ssh  = use_ssh
         self._use_snmp = use_snmp
-        self._store    = SessionStore()
         self._abort    = False
 
     def abort(self) -> None:
@@ -155,7 +153,16 @@ class ScanWorker(QThread):
             logger.error("Error scanning %s: %s", ip, exc)
             device.scan_status = ScanStatus.FAILED.value
 
-        self._store.save_device(device)
+        # Auto-suggest a Monitor peripheral for CLIENT devices
+        if device.device_type == DeviceType.CLIENT.value and not device.peripherals:
+            device.peripherals.append(
+                Peripheral(
+                    device_id=device.id,
+                    peripheral_type="Monitor",
+                    is_suggestion=True,
+                )
+            )
+
         return device
 
     # ------------------------------------------------------------------

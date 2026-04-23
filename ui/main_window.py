@@ -1,10 +1,7 @@
 """AutoDoku main application window.
 
-Redesigned in Session 3:
-  - Inline-editable ResultTableWidget is the sole working document (tile view removed)
-  - Stats bar shows device counts by type
-  - Export goes directly to file-save dialog (no separate review dialog)
-  - DeviceEditDialog opened on double-click for peripheral management and full edits
+Fully in-memory: no SQLite, no local storage.
+Previous exports can be re-imported via "CSV importieren" to continue work.
 """
 from __future__ import annotations
 
@@ -29,12 +26,13 @@ from PyQt6.QtWidgets import (
 
 from core.scanner import ScanWorker
 from data.models import Device, DeviceType, ScanSession
-from data.session_store import SessionStore
 from export import idoit_csv_exporter
+from export.csv_importer import import_csv
 from ui.device_edit_dialog import DeviceEditDialog
 from ui.progress_widget import ProgressWidget
 from ui.result_table_widget import ResultTableWidget
 from ui.scan_config_dialog import ScanConfigDialog
+from version import __version__, __app_name__
 
 logger = logging.getLogger(__name__)
 
@@ -45,14 +43,12 @@ class MainWindow(QMainWindow):
     def __init__(self, config: dict) -> None:
         super().__init__()
         self._config  = config
-        self._store   = SessionStore()
         self._session: ScanSession | None = None
         self._worker: ScanWorker | None = None
 
-        self.setWindowTitle("AutoDoku – Netzwerkscanner & Dokumentation")
+        self.setWindowTitle(f"{__app_name__} {__version__} – Netzwerkscanner & Dokumentation")
         self.resize(1400, 820)
         self._build_ui()
-        self._load_last_session()
 
     # ------------------------------------------------------------------
     # UI construction
@@ -78,7 +74,7 @@ class MainWindow(QMainWindow):
         layout.setSpacing(10)
 
         # Logo / app name
-        title_lbl = QLabel("AutoDoku")
+        title_lbl = QLabel(f"{__app_name__}")
         title_lbl.setObjectName("appTitle")
         layout.addWidget(title_lbl)
 
@@ -160,13 +156,11 @@ class MainWindow(QMainWindow):
         cap_lbl.setObjectName("statCaption")
         h.addWidget(val_lbl)
         h.addWidget(cap_lbl)
-        # Store reference for update
         w._value_lbl = val_lbl  # type: ignore[attr-defined]
         return w
 
     def _build_table(self) -> ResultTableWidget:
         self._table = ResultTableWidget()
-        self._table.set_store(self._store)
         self._table.device_edit_requested.connect(self._open_device_edit)
         self._table.device_changed.connect(self._on_device_changed)
         return self._table
@@ -180,6 +174,12 @@ class MainWindow(QMainWindow):
         self._progress = ProgressWidget()
         self._progress.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         layout.addWidget(self._progress)
+
+        self._import_btn = QPushButton("⬆  CSV importieren…")
+        self._import_btn.setObjectName("btnSecondary")
+        self._import_btn.setToolTip("Einen früheren AutoDoku-Export laden und weiterarbeiten")
+        self._import_btn.clicked.connect(self._import_csv)
+        layout.addWidget(self._import_btn)
 
         self._export_btn = QPushButton("⬇  Exportieren als CSV…")
         self._export_btn.setEnabled(False)
@@ -209,26 +209,6 @@ class MainWindow(QMainWindow):
         self._stat_other._value_lbl.setText(str(other))       # type: ignore[attr-defined]
 
     # ------------------------------------------------------------------
-    # Session persistence
-    # ------------------------------------------------------------------
-
-    def _load_last_session(self) -> None:
-        sessions = self._store.list_sessions()
-        if not sessions:
-            return
-        last = self._store.load_session(sessions[-1].id)
-        if last and last.devices:
-            self._session = last
-            self._ip_input.setText(last.ip_range)
-            for device in last.devices:
-                self._table.add_device(device)
-            self._export_btn.setEnabled(True)
-            self._update_stats()
-            self._progress.set_progress(
-                100, f"Letzter Scan geladen: {len(last.devices)} Gerät(e)"
-            )
-
-    # ------------------------------------------------------------------
     # Scan lifecycle
     # ------------------------------------------------------------------
 
@@ -249,7 +229,6 @@ class MainWindow(QMainWindow):
             created_at=now,
             name=f"Scan {ip_range} – {now[:10]}",
         )
-        self._store.save_session(self._session)
 
         self._worker = ScanWorker(
             session=self._session,
@@ -302,7 +281,6 @@ class MainWindow(QMainWindow):
         QMessageBox.critical(self, "Scan-Fehler", message)
 
     def _on_device_changed(self, device: Device) -> None:
-        """Called when the user edits a cell inline."""
         self._update_stats()
 
     # ------------------------------------------------------------------
@@ -310,10 +288,9 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
 
     def _open_device_edit(self, device: Device) -> None:
-        dlg = DeviceEditDialog(device, self._store, parent=self)
+        dlg = DeviceEditDialog(device, parent=self)
         if dlg.exec() == DeviceEditDialog.DialogCode.Accepted:
             updated = dlg.apply()
-            self._store.save_device(updated)
             self._table.update_device(updated)
             if self._session:
                 for i, d in enumerate(self._session.devices):
@@ -330,7 +307,48 @@ class MainWindow(QMainWindow):
         ScanConfigDialog(parent=self).exec()
 
     # ------------------------------------------------------------------
-    # CSV export – direct file dialog, no extra review step
+    # CSV import – load a previous export to continue work
+    # ------------------------------------------------------------------
+
+    def _import_csv(self) -> None:
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "AutoDoku-Export öffnen",
+            "",
+            "CSV-Dateien (*.csv);;Alle Dateien (*)",
+        )
+        if not path:
+            return
+
+        try:
+            devices = import_csv(path)
+        except Exception as exc:
+            QMessageBox.critical(self, "Import-Fehler", str(exc))
+            logger.error("CSV import failed: %s", exc)
+            return
+
+        self._table.clear_devices()
+
+        now = datetime.now(tz=timezone.utc).isoformat()
+        self._session = ScanSession(
+            ip_range="",
+            created_at=now,
+            name=f"Import {now[:10]}",
+            devices=devices,
+        )
+
+        for device in devices:
+            self._table.add_device(device)
+
+        self._export_btn.setEnabled(bool(devices))
+        self._update_stats()
+        self._progress.set_progress(
+            100,
+            f"CSV importiert: {len(devices)} Gerät(e) geladen — bereit zur Bearbeitung",
+        )
+
+    # ------------------------------------------------------------------
+    # CSV export
     # ------------------------------------------------------------------
 
     def _export_csv(self) -> None:
@@ -354,15 +372,14 @@ class MainWindow(QMainWindow):
 
         try:
             if self._session is None:
-                # Fallback: create a transient session shell
                 self._session = ScanSession(
                     ip_range="",
                     created_at=datetime.now(tz=timezone.utc).isoformat(),
                     name="Export",
+                    devices=devices,
                 )
-                self._session.devices = devices
 
-            count = idoit_csv_exporter.export(self._session, path, self._store)
+            count = idoit_csv_exporter.export(self._session, path)
             QMessageBox.information(
                 self,
                 "Export erfolgreich",
@@ -380,5 +397,4 @@ class MainWindow(QMainWindow):
         if self._worker and self._worker.isRunning():
             self._worker.abort()
             self._worker.wait(3000)
-        self._store.close()
         event.accept()

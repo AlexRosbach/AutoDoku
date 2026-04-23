@@ -133,7 +133,8 @@ class ResultTableWidget(QTableWidget):
         self._setup_table()
 
     def set_store(self, store) -> None:
-        self._store = store
+        """Kept for API compatibility – no longer used (no local storage)."""
+        pass
 
     # ------------------------------------------------------------------
     # Setup
@@ -322,8 +323,6 @@ class ResultTableWidget(QTableWidget):
             value = DEVICE_TYPE_FROM_LABEL.get(value, value)
 
         setattr(device, field, value)
-        if self._store:
-            self._store.save_device(device)
         self.device_changed.emit(device)
 
     # ------------------------------------------------------------------
