@@ -38,7 +38,6 @@ from data.models import (
     DeviceType,
     Peripheral,
 )
-from data.session_store import SessionStore
 from ui.peripheral_dialog import PeripheralDialog
 
 logger = logging.getLogger(__name__)
@@ -50,11 +49,11 @@ _LABEL_HINT_STYLE = "color:#ffd966; font-size:11px; font-style:italic;"
 class DeviceEditDialog(QDialog):
     """Modal dialog for reviewing and editing a Device's documentation."""
 
-    def __init__(self, device: Device, store: SessionStore, parent=None) -> None:
+    def __init__(self, device: Device, parent=None) -> None:
         super().__init__(parent)
         self._device = device
-        self._store  = store
-        self._peripherals: list[Peripheral] = store.load_peripherals_for_device(device.id)
+        # Work on a shallow copy of the list so we can cancel changes
+        self._peripherals: list[Peripheral] = list(device.peripherals)
         self._suggestions = suggest(device)
         filled, total = completion_score(device)
 
@@ -261,18 +260,25 @@ class DeviceEditDialog(QDialog):
     def _refresh_peripheral_list(self) -> None:
         self._periph_list.clear()
         for p in self._peripherals:
-            label = f"{p.peripheral_type}  ·  {p.manufacturer} {p.model}".strip(" ·")
+            parts = [p.peripheral_type]
+            details = " ".join(filter(None, [p.manufacturer, p.model]))
+            if details:
+                parts.append(details)
+            label = "  ·  ".join(parts)
             if p.serial:
                 label += f"  [{p.serial}]"
             item = QListWidgetItem(label)
             item.setData(Qt.ItemDataRole.UserRole, p.id)
+            # Mark auto-suggested peripherals visually
+            if p.is_suggestion:
+                item.setForeground(QColor("#ffd966"))
+                item.setToolTip("Automatischer Vorschlag – bitte Modell / Seriennummer ergänzen")
             self._periph_list.addItem(item)
 
     def _add_peripheral(self) -> None:
         dlg = PeripheralDialog(self._device.id, parent=self)
         if dlg.exec() == QDialog.DialogCode.Accepted:
             p = dlg.get_peripheral()
-            self._store.save_peripheral(p)
             self._peripherals.append(p)
             self._refresh_peripheral_list()
 
@@ -283,14 +289,13 @@ class DeviceEditDialog(QDialog):
             dlg = PeripheralDialog(self._device.id, peripheral=p, parent=self)
             if dlg.exec() == QDialog.DialogCode.Accepted:
                 updated = dlg.get_peripheral()
-                self._store.save_peripheral(updated)
+                updated.is_suggestion = False   # user confirmed / edited → no longer a suggestion
                 self._peripherals[row] = updated
                 self._refresh_peripheral_list()
 
     def _remove_peripheral(self) -> None:
         row = self._periph_list.currentRow()
         if 0 <= row < len(self._peripherals):
-            self._store.delete_peripheral(self._peripherals[row].id)
             self._peripherals.pop(row)
             self._refresh_peripheral_list()
 
@@ -311,4 +316,8 @@ class DeviceEditDialog(QDialog):
             setattr(self._device, attr, edit.text().strip())
 
         self._device.notes = self._notes.toPlainText().strip()
+
+        # Write peripherals back to the device (in-memory, no DB)
+        self._device.peripherals = list(self._peripherals)
+
         return self._device
