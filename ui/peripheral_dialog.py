@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -39,7 +40,7 @@ class PeripheralDialog(QDialog):
         self._device_id = device_id
         self._existing  = peripheral
         self.setWindowTitle(
-            "Peripherie bearbeiten" if peripheral else "Peripherie hinzufügen"
+            "Edit Peripheral" if peripheral else "Add Peripheral"
         )
         self.setMinimumWidth(380)
         self._build_ui()
@@ -55,23 +56,23 @@ class PeripheralDialog(QDialog):
 
         self._type = QComboBox()
         self._type.addItems(PERIPHERAL_TYPES)
-        form.addRow(QLabel("Typ:"), self._type)
+        form.addRow(QLabel("Type:"), self._type)
 
         self._manufacturer = QLineEdit()
-        self._manufacturer.setPlaceholderText("z. B. Dell, HP, Logitech …")
-        form.addRow(QLabel("Hersteller:"), self._manufacturer)
+        self._manufacturer.setPlaceholderText("e.g. Dell, HP, Logitech …")
+        form.addRow(QLabel("Manufacturer:"), self._manufacturer)
 
         self._model = QLineEdit()
-        self._model.setPlaceholderText("z. B. U2722D, MX Keys …")
-        form.addRow(QLabel("Modell:"), self._model)
+        self._model.setPlaceholderText("e.g. U2722D, MX Keys …")
+        form.addRow(QLabel("Model:"), self._model)
 
         self._serial = QLineEdit()
-        self._serial.setPlaceholderText("Seriennummer (optional)")
-        form.addRow(QLabel("Seriennummer:"), self._serial)
+        self._serial.setPlaceholderText("Serial number (optional)")
+        form.addRow(QLabel("Serial No.:"), self._serial)
 
         self._notes = QLineEdit()
-        self._notes.setPlaceholderText("Zusätzliche Notizen (optional)")
-        form.addRow(QLabel("Notizen:"), self._notes)
+        self._notes.setPlaceholderText("Additional notes (optional)")
+        form.addRow(QLabel("Notes:"), self._notes)
 
         layout.addLayout(form)
 
@@ -105,5 +106,3 @@ class PeripheralDialog(QDialog):
         )
 
 
-# Fix missing import
-from PyQt6.QtCore import Qt  # noqa: E402 (needed for form label alignment)

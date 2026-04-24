@@ -31,11 +31,15 @@ pip install --upgrade pip -q
 pip install -r requirements.txt -q
 if errorlevel 1 (echo FEHLER beim Installieren der Pakete. & pause & exit /b 1)
 
-echo [3/4] Erstelle EXE mit PyInstaller...
+echo [3/5] Erzeuge App-Icon (ICO aus SVG)...
+python tools\make_ico.py
+if errorlevel 1 (echo FEHLER beim Erzeugen des Icons. & pause & exit /b 1)
+
+echo [4/5] Erstelle EXE mit PyInstaller...
 pyinstaller autodoku.spec --clean --noconfirm
 if errorlevel 1 (echo FEHLER beim Bauen der EXE. & pause & exit /b 1)
 
-echo [4/4] Pruefe Ergebnis...
+echo [5/5] Pruefe Ergebnis...
 if exist "dist\AutoDoku.exe" (
     echo.
     echo ============================================================

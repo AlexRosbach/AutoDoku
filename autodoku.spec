@@ -10,6 +10,7 @@ a = Analysis(
         ('config.json',                   '.'),
         ('ui/styles/dark_theme.qss',      'ui/styles'),
         ('ui/assets/autodoku.svg',        'ui/assets'),
+        ('ui/assets/autodoku.ico',        'ui/assets'),
     ],
     hiddenimports=[
         # Windows / COM
@@ -76,5 +77,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    # icon='autodoku.ico',
+    icon='ui/assets/autodoku.ico',
 )

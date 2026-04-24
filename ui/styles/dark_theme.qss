@@ -252,6 +252,30 @@ QScrollBar::handle:horizontal:hover { background: #555; }
 QScrollBar::add-line:horizontal,
 QScrollBar::sub-line:horizontal { width: 0; }
 
+/* ── Suggestion / auto-fill styling ───────────────────────────────── */
+QLineEdit#suggestionField {
+    background: #4a3d00;
+    color: #ffd966;
+    border: 1px solid #7a6200;
+    border-radius: 3px;
+}
+QLineEdit#suggestionField:focus { border-color: #c09600; }
+
+QLabel#suggestionBadge {
+    color: #ffd966;
+    font-size: 10px;
+    margin-left: 4px;
+}
+QLabel#suggestionHint {
+    color: #ffd966;
+    font-size: 11px;
+    font-style: italic;
+}
+QLabel#scanValue {
+    color: #9e9e9e;
+}
+QLabel#completionLabel { font-weight: bold; }
+
 /* ── Tool tips ─────────────────────────────────────────────────────── */
 QToolTip {
     background-color: #2a2a2a;

@@ -83,34 +83,34 @@ class MainWindow(QMainWindow):
         sep.setObjectName("topBarSep")
         layout.addWidget(sep)
 
-        layout.addWidget(QLabel("IP-Bereich:"))
+        layout.addWidget(QLabel("IP Range:"))
         self._ip_input = QLineEdit(self._config.get("default_ip_range", "192.168.1.0/24"))
         self._ip_input.setFixedWidth(200)
-        self._ip_input.setPlaceholderText("z. B. 192.168.1.0/24")
+        self._ip_input.setPlaceholderText("e.g. 192.168.1.0/24")
         layout.addWidget(self._ip_input)
 
         self._wmi_cb  = QCheckBox("WMI")
-        self._wmi_cb.setToolTip("WMI-Scan für Windows-Hosts (Credentials erforderlich)")
+        self._wmi_cb.setToolTip("WMI deep scan for Windows hosts (credentials required)")
         self._ssh_cb  = QCheckBox("SSH")
-        self._ssh_cb.setToolTip("SSH-Scan für Linux-Hosts (Credentials erforderlich)")
+        self._ssh_cb.setToolTip("SSH deep scan for Linux hosts (credentials required)")
         self._snmp_cb = QCheckBox("SNMP")
-        self._snmp_cb.setToolTip("SNMP-Scan für Netzwerkgeräte")
+        self._snmp_cb.setToolTip("SNMP scan for network devices (switches, printers)")
         layout.addWidget(self._wmi_cb)
         layout.addWidget(self._ssh_cb)
         layout.addWidget(self._snmp_cb)
 
         layout.addStretch()
 
-        self._config_btn = QPushButton("⚙  Konfigurieren")
+        self._config_btn = QPushButton("⚙  Configure")
         self._config_btn.setObjectName("btnSecondary")
         self._config_btn.clicked.connect(self._open_config)
         layout.addWidget(self._config_btn)
 
-        self._scan_btn = QPushButton("▶  Scan starten")
+        self._scan_btn = QPushButton("▶  Start Scan")
         self._scan_btn.clicked.connect(self._start_scan)
         layout.addWidget(self._scan_btn)
 
-        self._stop_btn = QPushButton("■  Abbrechen")
+        self._stop_btn = QPushButton("■  Stop")
         self._stop_btn.setObjectName("btnSecondary")
         self._stop_btn.setEnabled(False)
         self._stop_btn.clicked.connect(self._stop_scan)
@@ -125,19 +125,19 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(10, 4, 10, 4)
         layout.setSpacing(20)
 
-        self._stat_total    = self._make_stat_label("Geräte gesamt", "0")
-        self._stat_clients  = self._make_stat_label("Clients",        "0", "#5b9bd5")
-        self._stat_servers  = self._make_stat_label("Server",         "0", "#70c842")
-        self._stat_switches = self._make_stat_label("Switches",       "0", "#ffd966")
-        self._stat_printers = self._make_stat_label("Drucker",        "0", "#cc88ff")
-        self._stat_other    = self._make_stat_label("Sonstige",       "0", "#888")
+        self._stat_total    = self._make_stat_label("Total",    "0")
+        self._stat_clients  = self._make_stat_label("Clients",  "0", "#5b9bd5")
+        self._stat_servers  = self._make_stat_label("Servers",  "0", "#70c842")
+        self._stat_switches = self._make_stat_label("Switches", "0", "#ffd966")
+        self._stat_printers = self._make_stat_label("Printers", "0", "#cc88ff")
+        self._stat_other    = self._make_stat_label("Other",    "0", "#888")
 
         for w in (self._stat_total, self._stat_clients, self._stat_servers,
                   self._stat_switches, self._stat_printers, self._stat_other):
             layout.addWidget(w)
 
         layout.addStretch()
-        hint = QLabel("Doppelklick auf eine Zeile → Details & Peripherie bearbeiten")
+        hint = QLabel("Double-click a row to edit details & peripherals")
         hint.setObjectName("statsHint")
         layout.addWidget(hint)
 
@@ -175,13 +175,13 @@ class MainWindow(QMainWindow):
         self._progress.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         layout.addWidget(self._progress)
 
-        self._import_btn = QPushButton("⬆  CSV importieren…")
+        self._import_btn = QPushButton("⬆  Import CSV…")
         self._import_btn.setObjectName("btnSecondary")
-        self._import_btn.setToolTip("Einen früheren AutoDoku-Export laden und weiterarbeiten")
+        self._import_btn.setToolTip("Load a previous AutoDoku export to continue working")
         self._import_btn.clicked.connect(self._import_csv)
         layout.addWidget(self._import_btn)
 
-        self._export_btn = QPushButton("⬇  Exportieren als CSV…")
+        self._export_btn = QPushButton("⬇  Export as CSV…")
         self._export_btn.setEnabled(False)
         self._export_btn.clicked.connect(self._export_csv)
         layout.addWidget(self._export_btn)
@@ -215,7 +215,7 @@ class MainWindow(QMainWindow):
     def _start_scan(self) -> None:
         ip_range = self._ip_input.text().strip()
         if not ip_range:
-            QMessageBox.warning(self, "Fehler", "Bitte einen IP-Bereich eingeben.")
+            QMessageBox.warning(self, "Error", "Please enter an IP range.")
             return
 
         self._table.clear_devices()
@@ -266,19 +266,19 @@ class MainWindow(QMainWindow):
 
         clients = sum(1 for d in devices if d.device_type == DeviceType.CLIENT.value)
         servers = sum(1 for d in devices if d.device_type == DeviceType.SERVER.value)
-        parts = [f"{count} Gerät(e) gefunden"]
+        parts = [f"{count} device(s) found"]
         if clients:
-            parts.append(f"{clients} Client(s)")
+            parts.append(f"{clients} client(s)")
         if servers:
-            parts.append(f"{servers} Server")
-        msg = " · ".join(parts) + " — Zellen direkt bearbeitbar, Doppelklick für Details"
+            parts.append(f"{servers} server(s)")
+        msg = " · ".join(parts) + " — cells editable inline · double-click for full details"
         self._progress.set_progress(100, msg)
         self._update_stats()
 
     def _on_scan_error(self, message: str) -> None:
         self._scan_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)
-        QMessageBox.critical(self, "Scan-Fehler", message)
+        QMessageBox.critical(self, "Scan Error", message)
 
     def _on_device_changed(self, device: Device) -> None:
         self._update_stats()
@@ -313,9 +313,9 @@ class MainWindow(QMainWindow):
     def _import_csv(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
             self,
-            "AutoDoku-Export öffnen",
+            "Open AutoDoku Export",
             "",
-            "CSV-Dateien (*.csv);;Alle Dateien (*)",
+            "CSV Files (*.csv);;All Files (*)",
         )
         if not path:
             return
@@ -323,7 +323,7 @@ class MainWindow(QMainWindow):
         try:
             devices = import_csv(path)
         except Exception as exc:
-            QMessageBox.critical(self, "Import-Fehler", str(exc))
+            QMessageBox.critical(self, "Import Error", str(exc))
             logger.error("CSV import failed: %s", exc)
             return
 
@@ -344,7 +344,7 @@ class MainWindow(QMainWindow):
         self._update_stats()
         self._progress.set_progress(
             100,
-            f"CSV importiert: {len(devices)} Gerät(e) geladen — bereit zur Bearbeitung",
+            f"Imported {len(devices)} device(s) — ready to edit and export",
         )
 
     # ------------------------------------------------------------------
@@ -354,7 +354,7 @@ class MainWindow(QMainWindow):
     def _export_csv(self) -> None:
         devices = self._table.get_devices()
         if not devices:
-            QMessageBox.information(self, "Export", "Keine Daten zum Exportieren.")
+            QMessageBox.information(self, "Export", "No data to export.")
             return
 
         # Sync live table state into session
@@ -363,9 +363,9 @@ class MainWindow(QMainWindow):
 
         path, _ = QFileDialog.getSaveFileName(
             self,
-            "CSV-Datei speichern",
+            "Save CSV File",
             "autodoku_export.csv",
-            "CSV-Dateien (*.csv);;Alle Dateien (*)",
+            "CSV Files (*.csv);;All Files (*)",
         )
         if not path:
             return
@@ -382,11 +382,11 @@ class MainWindow(QMainWindow):
             count = idoit_csv_exporter.export(self._session, path)
             QMessageBox.information(
                 self,
-                "Export erfolgreich",
-                f"✓  {count} Zeile(n) exportiert nach\n{path}",
+                "Export Successful",
+                f"✓  {count} row(s) exported to\n{path}",
             )
         except OSError as exc:
-            QMessageBox.critical(self, "Export-Fehler", str(exc))
+            QMessageBox.critical(self, "Export Error", str(exc))
             logger.error("CSV export failed: %s", exc)
 
     # ------------------------------------------------------------------

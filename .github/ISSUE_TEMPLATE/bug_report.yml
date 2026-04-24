@@ -1,0 +1,84 @@
+name: Bug Report
+description: Something isn't working as expected.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please fill in as much detail as possible.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the problem.
+      placeholder: AutoDoku crashed when I tried to export the CSV after scanning…
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      placeholder: The CSV file should have been saved successfully.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Start AutoDoku.exe
+        2. Enter IP range 192.168.1.0/24
+        3. Enable WMI, click Start Scan
+        4. Click Export as CSV…
+        5. See error
+    validations:
+      required: true
+
+  - type: dropdown
+    id: version
+    attributes:
+      label: AutoDoku version
+      options:
+        - v1.2.0
+        - v1.1.x or older
+        - Built from source (main branch)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Windows version
+      options:
+        - Windows 11
+        - Windows 10
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: network-size
+    attributes:
+      label: Approx. number of devices in the scanned range
+      placeholder: "e.g. 50"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log output (autodoku.log)
+      description: Paste relevant lines from `autodoku.log` (sits next to the EXE).
+      render: text
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and this has not been reported yet.
+          required: true
+        - label: I am using the latest release.

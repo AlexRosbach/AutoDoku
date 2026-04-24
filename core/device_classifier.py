@@ -65,6 +65,27 @@ _LINUX_SERVER_RE = re.compile(
 )
 _CISCO_IOS_RE = re.compile(r"(cisco|ios|junos|aruba\s+os|procurve|extremeos)", re.IGNORECASE)
 
+# Laptop / notebook model name indicators — used to skip Monitor auto-suggestion
+_LAPTOP_MODEL_RE = re.compile(
+    r"(laptop|notebook|thinkpad|latitude|elitebook|probook|zbook|inspiron\s*\d*[Nn]|"
+    r"vostro\s*\d*[Nn]|pavilion\s*\d*[Nn]|envy\s*\d*[Nn]|omen\s*\d*[Nn]|spectre|"
+    r"ideapad|thinkbook|legion\s*slim|yoga\b|flex\s*\d|slim\s*\d|vivobook|zenbook|"
+    r"expertbook|chromebook|macbook|surface\s+(pro|go|laptop)|portege|tecra|satellite|"
+    r"vaio|gram\b|swift\s*\d|spin\s*\d|aspire\s*\d*[Ee]|travelmate)",
+    re.IGNORECASE,
+)
+
+
+def is_likely_laptop(model: str = "", hostname: str = "") -> bool:
+    """Return True if model or hostname suggests a laptop / notebook form factor.
+
+    Used to suppress the automatic Monitor peripheral suggestion for mobile devices.
+    """
+    return bool(
+        (model and _LAPTOP_MODEL_RE.search(model))
+        or (hostname and _LAPTOP_MODEL_RE.search(hostname))
+    )
+
 
 def classify(open_ports: list[int], hostname: str, vendor: str = "") -> str:
     """Return the i-doit object-type constant that best fits this device.
