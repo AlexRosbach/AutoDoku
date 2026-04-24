@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [Unreleased] — publish-readiness
+
+### Changed
+- License changed from MIT to GPL v3 (required by PyQt6 dependency)
+- README: license badge updated, legal notice section added
+- Added `.gitignore` (excludes `.venv/`, `build/`, `dist/`, `__pycache__/`)
+
+---
+
 ## [1.2.1] — 2026-04-24
 
 ### Added

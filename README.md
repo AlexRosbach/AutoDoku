@@ -7,7 +7,7 @@
 **Network Scanner & i-doit Documentation Assistant for Windows**
 
 [![Version](https://img.shields.io/badge/version-1.2.1-0078d4)](https://github.com/AlexRosbach/AutoDoku/releases/latest)
-[![License: MIT](https://img.shields.io/badge/license-MIT-22c55e)](LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/license-GPLv3-22c55e)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078d4)](https://github.com/AlexRosbach/AutoDoku)
 [![Python](https://img.shields.io/badge/python-3.11+-3776ab)](https://python.org)
 
@@ -330,9 +330,20 @@ AutoDoku/
 
 ---
 
+## Legal Notice
+
+This tool is intended for use **only on networks you own or have explicit written permission to scan**.
+Unauthorized network scanning may violate applicable laws (e.g. German StGB § 202c).
+The author assumes no liability for misuse.
+
+---
+
 ## License
 
-MIT License — see [LICENSE](LICENSE).
+GNU General Public License v3.0 — see [LICENSE](LICENSE).
+
+AutoDoku uses [PyQt6](https://www.riverbankcomputing.com/software/pyqt/) which is licensed under GPL v3.
+As a result, AutoDoku is also distributed under GPL v3.
 
 ---
 
