@@ -121,7 +121,7 @@ def _peripheral_to_row(periph: Peripheral, parent: Device) -> list[str]:
     obj_type = PERIPHERAL_IDOIT_TYPE.get(periph.peripheral_type, periph.peripheral_type)
     label = " ".join(filter(None, [periph.manufacturer, periph.model])) or periph.peripheral_type
     return [
-        "",   # Sysid – peripherals are always created as new objects
+        periph.sysid or "",   # Sysid – populated on re-import to update existing object
         obj_type,
         label,
         "",   # IP

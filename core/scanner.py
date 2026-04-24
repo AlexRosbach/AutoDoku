@@ -89,14 +89,15 @@ class ScanWorker(QThread):
         timeout     = self._config.get("scan_timeout", 2)
         max_workers = self._config.get("max_threads", 50)
 
-        self.progress.emit(0, "Starte ARP-Sweep…")
+        from ui.lang import t
+        self.progress.emit(0, t("scan_starting"))
 
         hosts = arp_sweep.sweep_mock() if mock_mode else arp_sweep.sweep(
             self._session.ip_range, timeout=timeout
         )
 
         if not hosts:
-            self.progress.emit(100, "Keine Hosts gefunden.")
+            self.progress.emit(100, t("scan_no_hosts"))
             return
 
         total = len(hosts)
@@ -119,9 +120,9 @@ class ScanWorker(QThread):
                 if device is not None:
                     self._session.devices.append(device)
                     self.device_found.emit(device)
-                self.progress.emit(pct, f"Gescannt: {completed}/{total}")
+                self.progress.emit(pct, t("scan_progress").format(done=completed, total=total))
 
-        status = "Scan abgebrochen." if self._abort else "Scan abgeschlossen."
+        status = t("scan_aborted") if self._abort else t("scan_done")
         self.progress.emit(100, status)
 
     # ------------------------------------------------------------------
@@ -206,6 +207,7 @@ class ScanWorker(QThread):
                         )
                         _apply_dict(device, data)
                         reclassify_from_scan(device)
+                        device.scan_method = "wmi"
                         break
                     logger.debug(
                         "WMI credential set %d failed for %s – %s",
@@ -246,6 +248,7 @@ class ScanWorker(QThread):
                         )
                         _apply_dict(device, data)
                         reclassify_from_scan(device)
+                        device.scan_method = "ssh"
                         break
                     logger.debug(
                         "SSH credential set %d failed for %s – %s",
@@ -276,6 +279,7 @@ class ScanWorker(QThread):
                         device.os = str(data["sysDescr"])
                     if "sysName" in data and not device.hostname:
                         device.hostname = str(data["sysName"])
+                    device.scan_method = "snmp"
                     break
                 logger.debug(
                     "SNMP community set %d failed for %s – %s",
@@ -286,6 +290,10 @@ class ScanWorker(QThread):
         # Keep manufacturer from deep scan if richer; fall back to vendor lookup
         if not device.manufacturer:
             device.manufacturer = vendor
+
+        # Mark basic scan if no deeper protocol succeeded
+        if not device.scan_method:
+            device.scan_method = "basic"
 
         device.raw_data = json.dumps({"open_ports": ports})
 

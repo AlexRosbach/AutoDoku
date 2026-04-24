@@ -82,6 +82,7 @@ class Peripheral:
     manufacturer:    str = ""
     model:           str = ""
     serial:          str = ""
+    sysid:           str = ""    # i-doit Sysid – update key for re-import
     notes:           str = ""
     is_suggestion:   bool = False   # True = auto-suggested, not yet confirmed by user
 
@@ -120,6 +121,7 @@ class Device:
     peripherals:  list[Peripheral] = field(default_factory=list)
     # ── Internal ──────────────────────────────────────────────────────
     scan_status:  str = ScanStatus.PENDING.value
+    scan_method:  str = ""           # "wmi" | "ssh" | "snmp" | "basic" | ""
     raw_data:     str = ""
 
 

@@ -33,6 +33,7 @@ from data.models import (
     DeviceType,
     ScanStatus,
 )
+from ui.lang import t, register as lang_register
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +54,9 @@ _FG_STATUS_DONE      = QColor("#70c842")
 _FG_STATUS_FAILED    = QColor("#f44336")
 _FG_STATUS_PENDING   = QColor("#888888")
 
+_COL_PERIPH_PENDING  = QColor("#4a3d00")   # amber bg for pending suggestions
+_FG_PERIPH_PENDING   = QColor("#ffd966")
+
 # Custom item roles
 _ROLE_FIELD      = Qt.ItemDataRole.UserRole        # field name str
 _ROLE_DEVICE_ID  = Qt.ItemDataRole.UserRole + 1   # device id str
@@ -60,34 +64,32 @@ _ROLE_SUGGESTED  = Qt.ItemDataRole.UserRole + 2   # bool – still a suggestion?
 _ROLE_USER_EDIT  = Qt.ItemDataRole.UserRole + 3   # bool – user has edited?
 
 # ── Column definitions ─────────────────────────────────────────────────────
-# (header, field, editable, min_width, is_dropdown)
+# (lang_key, field, editable, min_width, is_dropdown)
+# field == "__peripherals__" is a synthetic column rendered from device.peripherals
 _COLS: list[tuple[str, str | None, bool, int, bool]] = [
-    ("Status",        "scan_status",  False,  80, False),
-    ("Type",          "device_type",  True,   90, True),   # ComboBox
-    ("IP Address",    "ip",           False, 115, False),
-    ("MAC Address",   "mac",          False, 135, False),
-    ("Manufacturer",  "manufacturer", True,  130, False),
-    ("Hostname",      "hostname",     True,  150, False),
-    ("OS",            "os",           True,  150, False),
-    ("CPU",           "cpu",          True,  160, False),
-    ("RAM (GB)",      "ram_gb",       False,  70, False),
-    ("Model",         "model",        True,  130, False),
-    ("Serial No.",    "serial",       True,  115, False),
-    ("Location",      "location",     True,  110, False),
-    ("Room",          "room",         True,   70, False),
-    ("Department",    "department",   True,  110, False),
-    ("Contact",       "contact",      True,  110, False),
-    ("CMDB Status",   "cmdb_status",  True,  110, True),   # ComboBox
-    ("Sysid",         "sysid",        True,   90, False),
-    ("Notes",         "notes",        True,  180, False),
+    ("col_status",       "scan_status",     False,  80, False),
+    ("col_peripherals",  "__peripherals__", False,  90, False),
+    ("col_type",         "device_type",     True,   90, True),   # ComboBox
+    ("col_ip",           "ip",              False, 115, False),
+    ("col_mac",          "mac",             False, 135, False),
+    ("col_manufacturer", "manufacturer",    True,  130, False),
+    ("col_hostname",     "hostname",        True,  150, False),
+    ("col_os",           "os",              True,  150, False),
+    ("col_cpu",          "cpu",             True,  160, False),
+    ("col_ram",          "ram_gb",          False,  70, False),
+    ("col_model",        "model",           True,  130, False),
+    ("col_serial",       "serial",          True,  115, False),
+    ("col_location",     "location",        True,  110, False),
+    ("col_room",         "room",            True,   70, False),
+    ("col_department",   "department",      True,  110, False),
+    ("col_contact",      "contact",         True,  110, False),
+    ("col_cmdb_status",  "cmdb_status",     True,  110, True),   # ComboBox
+    ("col_sysid",        "sysid",           True,   90, False),
+    ("col_notes",        "notes",           True,  180, False),
 ]
 
-_STATUS_DISPLAY = {
-    ScanStatus.SCANNING.value: ("  ⟳  Scannt…",  _COL_STATUS_SCANNING, _FG_STATUS_SCANNING),
-    ScanStatus.DONE.value:     ("  ✓  Fertig",    _COL_STATUS_DONE,     _FG_STATUS_DONE),
-    ScanStatus.FAILED.value:   ("  ✗  Fehler",    _COL_STATUS_FAILED,   _FG_STATUS_FAILED),
-    ScanStatus.PENDING.value:  ("  …  Ausstehend",_COL_STATUS_PENDING,  _FG_STATUS_PENDING),
-}
+# Lookup from field name to column index (built once)
+_FIELD_TO_COL: dict[str, int] = {c[1]: i for i, c in enumerate(_COLS) if c[1]}
 
 
 class _ComboDelegate(QStyledItemDelegate):
@@ -130,9 +132,10 @@ class ResultTableWidget(QTableWidget):
         super().__init__(0, len(_COLS), parent)
         self._devices: dict[str, Device] = {}   # device_id → Device
         self._order: list[str] = []             # ordered device_ids
-        self._store = None                      # set by MainWindow after init
+        self._store = None                      # kept for API compatibility
         self._block_signals = False
         self._setup_table()
+        lang_register(self.retranslate)
 
     def set_store(self, store) -> None:
         """Kept for API compatibility – no longer used (no local storage)."""
@@ -143,8 +146,7 @@ class ResultTableWidget(QTableWidget):
     # ------------------------------------------------------------------
 
     def _setup_table(self) -> None:
-        headers = [c[0] for c in _COLS]
-        self.setHorizontalHeaderLabels(headers)
+        self.setHorizontalHeaderLabels([t(c[0]) for c in _COLS])
         self.setAlternatingRowColors(False)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.setWordWrap(False)
@@ -157,13 +159,11 @@ class ResultTableWidget(QTableWidget):
         hdr.setMinimumSectionSize(60)
         for i, (_, _, _, w, _) in enumerate(_COLS):
             hdr.resizeSection(i, w)
-        # Hostname (col 5) and OS (col 6) stretch to fill remaining space
-        hdr.setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch)
-        hdr.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)
+        # No Stretch modes on individual columns – users can freely resize them all
 
         # ComboBox delegates
-        typ_col   = next(i for i, c in enumerate(_COLS) if c[1] == "device_type")
-        cmdb_col  = next(i for i, c in enumerate(_COLS) if c[1] == "cmdb_status")
+        typ_col  = _FIELD_TO_COL.get("device_type", 2)
+        cmdb_col = _FIELD_TO_COL.get("cmdb_status", 16)
         self.setItemDelegateForColumn(
             typ_col, _ComboDelegate(list(DEVICE_TYPE_LABELS.values()), self)
         )
@@ -174,6 +174,10 @@ class ResultTableWidget(QTableWidget):
         self.setSortingEnabled(True)
         self.cellDoubleClicked.connect(self._on_double_click)
         self.itemChanged.connect(self._on_item_changed)
+
+    def retranslate(self) -> None:
+        """Update all column headers to the currently active language."""
+        self.setHorizontalHeaderLabels([t(c[0]) for c in _COLS])
 
     # ------------------------------------------------------------------
     # Public API
@@ -242,20 +246,78 @@ class ResultTableWidget(QTableWidget):
         editable: bool,
         suggestions: dict[str, str],
     ) -> None:
+        # ── Special: scan status column ──────────────────────────────────
         if field == "scan_status":
-            text, bg, fg = _STATUS_DISPLAY.get(
-                device.scan_status,
-                (_STATUS_DISPLAY[ScanStatus.PENDING.value])
-            )
+            status = device.scan_status
+            if status == ScanStatus.DONE.value:
+                method = getattr(device, "scan_method", "") or ""
+                label = {
+                    "wmi":   "WMI",
+                    "ssh":   "SSH",
+                    "snmp":  "SNMP",
+                    "basic": "Basic",
+                }.get(method, "Done")
+                text = f"  \u2713  {label}"
+                bg, fg = _COL_STATUS_DONE, _FG_STATUS_DONE
+            elif status == ScanStatus.SCANNING.value:
+                text, bg, fg = "  \u27f3  Scanning\u2026", _COL_STATUS_SCANNING, _FG_STATUS_SCANNING
+            elif status == ScanStatus.FAILED.value:
+                text, bg, fg = "  \u2717  Error", _COL_STATUS_FAILED, _FG_STATUS_FAILED
+            else:
+                text, bg, fg = "  \u2026  Pending", _COL_STATUS_PENDING, _FG_STATUS_PENDING
+
             item = QTableWidgetItem(text)
             item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            item.setData(_ROLE_DEVICE_ID, device.id)
             item.setBackground(QBrush(bg))
             item.setForeground(QBrush(fg))
             font = item.font(); font.setBold(True); item.setFont(font)
             self.setItem(row, col, item)
             return
 
-        # Get current value or suggestion
+        # ── Special: peripherals indicator column ────────────────────────
+        if field == "__peripherals__":
+            peripherals = device.peripherals
+            pending = [p for p in peripherals if p.is_suggestion]
+            confirmed = [p for p in peripherals if not p.is_suggestion]
+
+            if pending:
+                n = len(pending)
+                label = t("periph_suggestion").format(n=n)
+                if confirmed:
+                    label += f"  +{len(confirmed)}"
+                bg, fg = _COL_PERIPH_PENDING, _FG_PERIPH_PENDING
+                tooltip = (
+                    f"{n} peripheral suggestion(s) pending — "
+                    "double-click to review"
+                )
+                italic = True
+            elif confirmed:
+                n = len(confirmed)
+                label = t("periph_count").format(n=n)
+                bg, fg = _COL_NORMAL, QColor("#c0c0c0")
+                tooltip = f"{n} peripheral(s) documented"
+                italic = False
+            else:
+                label = ""
+                bg, fg = _COL_READONLY, _COL_FG_READONLY
+                tooltip = ""
+                italic = False
+
+            item = QTableWidgetItem(label)
+            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            item.setData(_ROLE_DEVICE_ID, device.id)
+            item.setData(_ROLE_FIELD, field)
+            item.setBackground(QBrush(bg))
+            item.setForeground(QBrush(fg))
+            if italic:
+                font = item.font(); font.setItalic(True); item.setFont(font)
+            if tooltip:
+                item.setToolTip(tooltip)
+            self.setItem(row, col, item)
+            return
+
+        # ── Normal field ─────────────────────────────────────────────────
         raw = getattr(device, field, "") if field else ""
         raw_value = "" if raw is None else str(raw)
 
@@ -268,7 +330,6 @@ class ResultTableWidget(QTableWidget):
 
         if editable and not raw_value and field in suggestions:
             display_value = suggestions[field]
-            # Map suggestion label for device_type
             if field == "device_type":
                 display_value = DEVICE_TYPE_LABELS.get(
                     suggestions[field], suggestions[field]
@@ -289,7 +350,7 @@ class ResultTableWidget(QTableWidget):
             item.setBackground(QBrush(_COL_SUGGESTION))
             item.setForeground(QBrush(_COL_FG_SUGGEST))
             font = item.font(); font.setItalic(True); item.setFont(font)
-            item.setToolTip("Automatischer Vorschlag – bitte prüfen und ggf. anpassen")
+            item.setToolTip("Auto-suggestion — please review and adjust if needed")
         else:
             item.setBackground(QBrush(_COL_NORMAL))
 
@@ -307,6 +368,8 @@ class ResultTableWidget(QTableWidget):
         field     = item.data(_ROLE_FIELD)
         if not device_id or not field:
             return
+        if field in ("scan_status", "__peripherals__"):
+            return   # read-only synthetic fields
 
         device = self._devices.get(device_id)
         if device is None:
@@ -349,7 +412,7 @@ class ResultTableWidget(QTableWidget):
     def _device_id_at_row(self, row: int) -> str | None:
         """Return the device ID stored in any non-status cell of *row*."""
         # IP column always carries _ROLE_DEVICE_ID and is never None
-        ip_col = next((i for i, c in enumerate(_COLS) if c[1] == "ip"), 2)
+        ip_col = _FIELD_TO_COL.get("ip", 3)
         item = self.item(row, ip_col)
         if item:
             return item.data(_ROLE_DEVICE_ID)
@@ -368,7 +431,7 @@ class ResultTableWidget(QTableWidget):
         This is correct even after the user sorts the table, unlike using
         _order.index() which only reflects insertion order.
         """
-        ip_col = next((i for i, c in enumerate(_COLS) if c[1] == "ip"), 2)
+        ip_col = _FIELD_TO_COL.get("ip", 3)
         for row in range(self.rowCount()):
             item = self.item(row, ip_col)
             if item and item.data(_ROLE_DEVICE_ID) == device_id:

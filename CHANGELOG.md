@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.2.1] — 2026-04-24
+
+### Added
+- **Peripheral Sysid field** — each peripheral now has its own i-doit Sysid field; populated on CSV re-import so i-doit updates the existing peripheral object instead of creating a duplicate
+- **Peripheral suggestion indicator** — a visible "🟡 N suggestion" badge in the main table (new Peripherals column) shows at a glance that peripheral suggestions are waiting for review — no need to open the dialog
+- **Peripheral suggestion banner** — when opening the Peripherals tab in the edit dialog, a prominent amber banner appears listing the number of unreviewed suggestions
+- **Language switcher** — top-bar button toggles the entire UI between English (EN) and German (DE); column headers, button labels, stats bar and tooltips all update live
+- **Scan method in Status column** — Status now shows the deep-scan protocol used: "✓ WMI", "✓ SSH", "✓ SNMP", or "✓ Basic" (port scan only) instead of just "✓ Done"
+
+### Fixed
+- **Column resize broken** — Hostname and OS columns were set to `Stretch` resize mode, preventing the user from resizing them; all columns now use interactive resize
+- **App name darker background** — `QLabel#appTitle` now inherits the top-bar background correctly via `background: transparent` in QSS
+- **German strings in Status column** — "Scannt…", "Fertig", "Fehler", "Ausstehend" replaced with English equivalents; scan progress messages in the progress bar are also translated
+
+---
+
 ## [1.2.0] — 2026-04-24
 
 ### Added

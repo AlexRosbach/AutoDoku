@@ -57,7 +57,7 @@ class DeviceEditDialog(QDialog):
         filled, total = completion_score(device)
 
         title = device.hostname or device.ip
-        self.setWindowTitle(f"Gerät bearbeiten – {title}")
+        self.setWindowTitle(f"Edit Device – {title}")
         self.setMinimumWidth(560)
         self.resize(600, 680)
         self._build_ui(filled, total)
@@ -220,6 +220,21 @@ class DeviceEditDialog(QDialog):
         w = QWidget()
         layout = QVBoxLayout(w)
 
+        # ── Suggestion banner ──────────────────────────────────────────
+        pending = [p for p in self._peripherals if p.is_suggestion]
+        if pending:
+            banner = QLabel(
+                f"🟡  {len(pending)} peripheral suggestion(s) — "
+                "please review, add model / serial and confirm."
+            )
+            banner.setWordWrap(True)
+            banner.setStyleSheet(
+                "background: #4a3d00; color: #ffd966; "
+                "padding: 8px 10px; border-radius: 3px; "
+                "font-weight: bold;"
+            )
+            layout.addWidget(banner)
+
         hint = QLabel(
             "Add all devices connected to this client.\n"
             "Monitors, keyboards, mice, headsets, docking stations, etc.\n"
@@ -272,7 +287,7 @@ class DeviceEditDialog(QDialog):
             # Mark auto-suggested peripherals visually
             if p.is_suggestion:
                 item.setForeground(QColor("#ffd966"))
-                item.setToolTip("Automatischer Vorschlag – bitte Modell / Seriennummer ergänzen")
+                item.setToolTip("Auto-suggestion — please add model / serial number and confirm")
             self._periph_list.addItem(item)
 
     def _add_peripheral(self) -> None:
