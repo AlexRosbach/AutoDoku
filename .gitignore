@@ -1,0 +1,15 @@
+# Local Claude AI editor settings (may contain tokens/secrets)
+.claude/
+
+# Application database (contains scan data)
+autodoku.db
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Build artifacts
+dist/
+build/
+*.spec.bak
