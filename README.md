@@ -6,7 +6,7 @@
 
 **Network Scanner & i-doit Documentation Assistant for Windows**
 
-[![Version](https://img.shields.io/badge/version-1.2.0-0078d4)](https://github.com/AlexRosbach/AutoDoku/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.2.1-0078d4)](https://github.com/AlexRosbach/AutoDoku/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-22c55e)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078d4)](https://github.com/AlexRosbach/AutoDoku)
 [![Python](https://img.shields.io/badge/python-3.11+-3776ab)](https://python.org)
@@ -48,7 +48,7 @@ AutoDoku scans your network, automatically identifies devices, and helps you fil
 
 | | |
 |---|---|
-| **Latest release** | [AutoDoku.exe — v1.2.0](https://github.com/AlexRosbach/AutoDoku/releases/latest) |
+| **Latest release** | [AutoDoku.exe — v1.2.1](https://github.com/AlexRosbach/AutoDoku/releases/latest) |
 | **All releases** | [github.com/AlexRosbach/AutoDoku/releases](https://github.com/AlexRosbach/AutoDoku/releases) |
 
 Just download `AutoDoku.exe` and run it — no installer, no Python, no Npcap required.

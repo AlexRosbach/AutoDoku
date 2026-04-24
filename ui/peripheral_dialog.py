@@ -70,6 +70,10 @@ class PeripheralDialog(QDialog):
         self._serial.setPlaceholderText("Serial number (optional)")
         form.addRow(QLabel("Serial No.:"), self._serial)
 
+        self._sysid = QLineEdit()
+        self._sysid.setPlaceholderText("i-doit Sysid – used to update on re-import")
+        form.addRow(QLabel("Sysid (i-doit):"), self._sysid)
+
         self._notes = QLineEdit()
         self._notes.setPlaceholderText("Additional notes (optional)")
         form.addRow(QLabel("Notes:"), self._notes)
@@ -91,6 +95,7 @@ class PeripheralDialog(QDialog):
         self._manufacturer.setText(p.manufacturer)
         self._model.setText(p.model)
         self._serial.setText(p.serial)
+        self._sysid.setText(p.sysid)
         self._notes.setText(p.notes)
 
     def get_peripheral(self) -> Peripheral:
@@ -102,6 +107,7 @@ class PeripheralDialog(QDialog):
             manufacturer=self._manufacturer.text().strip(),
             model=self._model.text().strip(),
             serial=self._serial.text().strip(),
+            sysid=self._sysid.text().strip(),
             notes=self._notes.text().strip(),
         )
 

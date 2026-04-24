@@ -27,6 +27,7 @@ QLabel#appTitle {
     color: #5b9bd5;
     letter-spacing: 1px;
     padding-right: 4px;
+    background: transparent;
 }
 
 /* ── Stats bar ─────────────────────────────────────────────────────── */

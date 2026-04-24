@@ -152,6 +152,7 @@ def _row_to_peripheral(row: dict[str, str], device_id: str) -> Peripheral:
         manufacturer=row.get("Hersteller", "").strip(),
         model=row.get("Modell", "").strip(),
         serial=row.get("Seriennummer", "").strip(),
+        sysid=row.get("Sysid", "").strip(),
         notes=row.get("Notizen", "").strip(),
         is_suggestion=False,
     )

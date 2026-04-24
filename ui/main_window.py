@@ -29,12 +29,22 @@ from data.models import Device, DeviceType, ScanSession
 from export import idoit_csv_exporter
 from export.csv_importer import import_csv
 from ui.device_edit_dialog import DeviceEditDialog
+from ui.lang import get_lang, toggle_lang, t, register as lang_register
 from ui.progress_widget import ProgressWidget
 from ui.result_table_widget import ResultTableWidget
 from ui.scan_config_dialog import ScanConfigDialog
 from version import __version__, __app_name__
 
 logger = logging.getLogger(__name__)
+
+
+def _set_stat_caption(stat_widget: "QWidget", caption: str) -> None:
+    """Update the caption QLabel inside a stat widget created by _make_stat_label."""
+    from PyQt6.QtWidgets import QLabel
+    for child in stat_widget.findChildren(QLabel):
+        if child.objectName() == "statCaption":
+            child.setText(caption)
+            break
 
 
 class MainWindow(QMainWindow):
@@ -46,9 +56,10 @@ class MainWindow(QMainWindow):
         self._session: ScanSession | None = None
         self._worker: ScanWorker | None = None
 
-        self.setWindowTitle(f"{__app_name__} {__version__} – Netzwerkscanner & Dokumentation")
+        self.setWindowTitle(f"{__app_name__} {__version__} – {t('window_title')}")
         self.resize(1400, 820)
         self._build_ui()
+        lang_register(self.retranslate)
 
     # ------------------------------------------------------------------
     # UI construction
@@ -83,34 +94,43 @@ class MainWindow(QMainWindow):
         sep.setObjectName("topBarSep")
         layout.addWidget(sep)
 
-        layout.addWidget(QLabel("IP Range:"))
+        self._ip_range_lbl = QLabel(t("lbl_ip_range"))
+        layout.addWidget(self._ip_range_lbl)
         self._ip_input = QLineEdit(self._config.get("default_ip_range", "192.168.1.0/24"))
         self._ip_input.setFixedWidth(200)
         self._ip_input.setPlaceholderText("e.g. 192.168.1.0/24")
         layout.addWidget(self._ip_input)
 
         self._wmi_cb  = QCheckBox("WMI")
-        self._wmi_cb.setToolTip("WMI deep scan for Windows hosts (credentials required)")
+        self._wmi_cb.setToolTip(t("tip_wmi"))
         self._ssh_cb  = QCheckBox("SSH")
-        self._ssh_cb.setToolTip("SSH deep scan for Linux hosts (credentials required)")
+        self._ssh_cb.setToolTip(t("tip_ssh"))
         self._snmp_cb = QCheckBox("SNMP")
-        self._snmp_cb.setToolTip("SNMP scan for network devices (switches, printers)")
+        self._snmp_cb.setToolTip(t("tip_snmp"))
         layout.addWidget(self._wmi_cb)
         layout.addWidget(self._ssh_cb)
         layout.addWidget(self._snmp_cb)
 
         layout.addStretch()
 
-        self._config_btn = QPushButton("⚙  Configure")
+        # Language toggle – switches between EN and DE
+        self._lang_btn = QPushButton("🇩🇪 DE")
+        self._lang_btn.setObjectName("btnSecondary")
+        self._lang_btn.setFixedWidth(68)
+        self._lang_btn.setToolTip("Switch language / Sprache wechseln")
+        self._lang_btn.clicked.connect(self._toggle_language)
+        layout.addWidget(self._lang_btn)
+
+        self._config_btn = QPushButton(t("btn_config"))
         self._config_btn.setObjectName("btnSecondary")
         self._config_btn.clicked.connect(self._open_config)
         layout.addWidget(self._config_btn)
 
-        self._scan_btn = QPushButton("▶  Start Scan")
+        self._scan_btn = QPushButton(t("btn_scan"))
         self._scan_btn.clicked.connect(self._start_scan)
         layout.addWidget(self._scan_btn)
 
-        self._stop_btn = QPushButton("■  Stop")
+        self._stop_btn = QPushButton(t("btn_stop"))
         self._stop_btn.setObjectName("btnSecondary")
         self._stop_btn.setEnabled(False)
         self._stop_btn.clicked.connect(self._stop_scan)
@@ -125,21 +145,21 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(10, 4, 10, 4)
         layout.setSpacing(20)
 
-        self._stat_total    = self._make_stat_label("Total",    "0")
-        self._stat_clients  = self._make_stat_label("Clients",  "0", "#5b9bd5")
-        self._stat_servers  = self._make_stat_label("Servers",  "0", "#70c842")
-        self._stat_switches = self._make_stat_label("Switches", "0", "#ffd966")
-        self._stat_printers = self._make_stat_label("Printers", "0", "#cc88ff")
-        self._stat_other    = self._make_stat_label("Other",    "0", "#888")
+        self._stat_total    = self._make_stat_label(t("stat_total"),    "0")
+        self._stat_clients  = self._make_stat_label(t("stat_clients"),  "0", "#5b9bd5")
+        self._stat_servers  = self._make_stat_label(t("stat_servers"),  "0", "#70c842")
+        self._stat_switches = self._make_stat_label(t("stat_switches"), "0", "#ffd966")
+        self._stat_printers = self._make_stat_label(t("stat_printers"), "0", "#cc88ff")
+        self._stat_other    = self._make_stat_label(t("stat_other"),    "0", "#888")
 
         for w in (self._stat_total, self._stat_clients, self._stat_servers,
                   self._stat_switches, self._stat_printers, self._stat_other):
             layout.addWidget(w)
 
         layout.addStretch()
-        hint = QLabel("Double-click a row to edit details & peripherals")
-        hint.setObjectName("statsHint")
-        layout.addWidget(hint)
+        self._hint_lbl = QLabel(t("hint_dblclick"))
+        self._hint_lbl.setObjectName("statsHint")
+        layout.addWidget(self._hint_lbl)
 
         return bar
 
@@ -175,13 +195,13 @@ class MainWindow(QMainWindow):
         self._progress.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         layout.addWidget(self._progress)
 
-        self._import_btn = QPushButton("⬆  Import CSV…")
+        self._import_btn = QPushButton(t("btn_import"))
         self._import_btn.setObjectName("btnSecondary")
-        self._import_btn.setToolTip("Load a previous AutoDoku export to continue working")
+        self._import_btn.setToolTip(t("tip_import"))
         self._import_btn.clicked.connect(self._import_csv)
         layout.addWidget(self._import_btn)
 
-        self._export_btn = QPushButton("⬇  Export as CSV…")
+        self._export_btn = QPushButton(t("btn_export"))
         self._export_btn.setEnabled(False)
         self._export_btn.clicked.connect(self._export_csv)
         layout.addWidget(self._export_btn)
@@ -298,6 +318,38 @@ class MainWindow(QMainWindow):
                         self._session.devices[i] = updated
                         break
             self._update_stats()
+
+    # ------------------------------------------------------------------
+    # Language toggle
+    # ------------------------------------------------------------------
+
+    def _toggle_language(self) -> None:
+        new_lang = toggle_lang()   # switches and notifies all callbacks
+        # Button shows the *other* language (what you'll switch TO next)
+        self._lang_btn.setText("🇩🇪 DE" if new_lang == "EN" else "🇬🇧 EN")
+
+    def retranslate(self) -> None:
+        """Update all translatable strings in the main window."""
+        self.setWindowTitle(f"{__app_name__} {__version__} – {t('window_title')}")
+        self._ip_range_lbl.setText(t("lbl_ip_range"))
+        self._wmi_cb.setToolTip(t("tip_wmi"))
+        self._ssh_cb.setToolTip(t("tip_ssh"))
+        self._snmp_cb.setToolTip(t("tip_snmp"))
+        self._config_btn.setText(t("btn_config"))
+        self._scan_btn.setText(t("btn_scan"))
+        self._stop_btn.setText(t("btn_stop"))
+        self._import_btn.setText(t("btn_import"))
+        self._import_btn.setToolTip(t("tip_import"))
+        self._export_btn.setText(t("btn_export"))
+        self._hint_lbl.setText(t("hint_dblclick"))
+        # Stats captions
+        _set_stat_caption(self._stat_total,    t("stat_total"))
+        _set_stat_caption(self._stat_clients,  t("stat_clients"))
+        _set_stat_caption(self._stat_servers,  t("stat_servers"))
+        _set_stat_caption(self._stat_switches, t("stat_switches"))
+        _set_stat_caption(self._stat_printers, t("stat_printers"))
+        _set_stat_caption(self._stat_other,    t("stat_other"))
+        # Table column headers (ResultTableWidget handles this via its own registration)
 
     # ------------------------------------------------------------------
     # Config
