@@ -1,0 +1,38 @@
+name: Question / Support
+description: Ask a usage question or get help with setup, credentials, or expected behaviour.
+title: "[Question]: "
+labels:
+  - question
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for setup questions, credential configuration, WMI/SSH issues, or general usage questions.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: What do you need help with?
+      placeholder: |
+        WMI scan always fails even though I entered the correct credentials.
+        How do I configure the firewall rules on the target host?
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Relevant details
+      placeholder: |
+        - AutoDoku version:
+        - Windows version (scanner machine):
+        - Target OS:
+        - Deep scan module (WMI / SSH / SNMP):
+        - What you already tried:
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log output or screenshots
+      description: Paste relevant lines from `autodoku.log` or attach a screenshot.
+      render: text

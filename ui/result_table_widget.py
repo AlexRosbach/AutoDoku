@@ -62,22 +62,24 @@ _ROLE_USER_EDIT  = Qt.ItemDataRole.UserRole + 3   # bool – user has edited?
 # ── Column definitions ─────────────────────────────────────────────────────
 # (header, field, editable, min_width, is_dropdown)
 _COLS: list[tuple[str, str | None, bool, int, bool]] = [
-    ("Status",       "scan_status",  False, 80,  False),
-    ("Typ",          "device_type",  True,  90,  True),   # ComboBox
-    ("IP-Adresse",   "ip",           False, 115, False),
-    ("MAC-Adresse",  "mac",          False, 135, False),
-    ("Hersteller",   "manufacturer", True,  130, False),
-    ("Hostname",     "hostname",     True,  150, False),
-    ("Betriebssystem","os",          True,  150, False),
-    ("Modell",       "model",        True,  130, False),
-    ("Seriennummer", "serial",       True,  115, False),
-    ("Standort",     "location",     True,  110, False),
-    ("Raum",         "room",         True,   80, False),
-    ("Abteilung",    "department",   True,  110, False),
-    ("Ansprechp.",   "contact",      True,  110, False),
-    ("CMDB-Status",  "cmdb_status",  True,  110, True),   # ComboBox
-    ("Sysid",        "sysid",        True,   90, False),  # i-doit update key
-    ("Notizen",      "notes",        True,  180, False),
+    ("Status",        "scan_status",  False,  80, False),
+    ("Type",          "device_type",  True,   90, True),   # ComboBox
+    ("IP Address",    "ip",           False, 115, False),
+    ("MAC Address",   "mac",          False, 135, False),
+    ("Manufacturer",  "manufacturer", True,  130, False),
+    ("Hostname",      "hostname",     True,  150, False),
+    ("OS",            "os",           True,  150, False),
+    ("CPU",           "cpu",          True,  160, False),
+    ("RAM (GB)",      "ram_gb",       False,  70, False),
+    ("Model",         "model",        True,  130, False),
+    ("Serial No.",    "serial",       True,  115, False),
+    ("Location",      "location",     True,  110, False),
+    ("Room",          "room",         True,   70, False),
+    ("Department",    "department",   True,  110, False),
+    ("Contact",       "contact",      True,  110, False),
+    ("CMDB Status",   "cmdb_status",  True,  110, True),   # ComboBox
+    ("Sysid",         "sysid",        True,   90, False),
+    ("Notes",         "notes",        True,  180, False),
 ]
 
 _STATUS_DISPLAY = {
@@ -155,7 +157,9 @@ class ResultTableWidget(QTableWidget):
         hdr.setMinimumSectionSize(60)
         for i, (_, _, _, w, _) in enumerate(_COLS):
             hdr.resizeSection(i, w)
-        hdr.setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch)  # Hostname stretches
+        # Hostname (col 5) and OS (col 6) stretch to fill remaining space
+        hdr.setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch)
+        hdr.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)
 
         # ComboBox delegates
         typ_col   = next(i for i, c in enumerate(_COLS) if c[1] == "device_type")
@@ -252,7 +256,8 @@ class ResultTableWidget(QTableWidget):
             return
 
         # Get current value or suggestion
-        raw_value = str(getattr(device, field, "") or "") if field else ""
+        raw = getattr(device, field, "") if field else ""
+        raw_value = "" if raw is None else str(raw)
 
         # Map i-doit constant to display label for dropdown fields
         if field == "device_type":

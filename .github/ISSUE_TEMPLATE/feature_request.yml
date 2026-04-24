@@ -1,0 +1,56 @@
+name: Feature Request
+description: Suggest an idea or improvement for AutoDoku.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea that would make AutoDoku better? We'd love to hear it.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: A clear description of the pain point or gap.
+      placeholder: When scanning large networks I have no way to filter devices by type…
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: What would you like to happen?
+      description: Describe the feature or behaviour you want.
+      placeholder: Add a filter bar above the table so I can show only Clients or Servers.
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why would this help?
+      description: Explain the benefit — who benefits and in what situation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives or workarounds
+      description: Have you found any workaround? Are there other approaches?
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context, mockups or screenshots
+      description: Attach any visuals or extra information that helps explain the request.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and this has not been requested yet.
+          required: true

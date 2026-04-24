@@ -23,7 +23,7 @@ from datetime import datetime, timezone
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from core import arp_sweep, device_classifier, port_scanner, vendor_lookup
-from core.device_classifier import reclassify_from_scan
+from core.device_classifier import reclassify_from_scan, is_likely_laptop
 from core import snmp_connector, ssh_connector, wmi_connector
 from data.credential_store import (
     SERVICE_SNMP,
@@ -153,8 +153,13 @@ class ScanWorker(QThread):
             logger.error("Error scanning %s: %s", ip, exc)
             device.scan_status = ScanStatus.FAILED.value
 
-        # Auto-suggest a Monitor peripheral for CLIENT devices
-        if device.device_type == DeviceType.CLIENT.value and not device.peripherals:
+        # Auto-suggest a Monitor peripheral for desktop CLIENT devices.
+        # Skip laptops/notebooks — they have built-in displays.
+        if (
+            device.device_type == DeviceType.CLIENT.value
+            and not device.peripherals
+            and not is_likely_laptop(device.model, device.hostname)
+        ):
             device.peripherals.append(
                 Peripheral(
                     device_id=device.id,
