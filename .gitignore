@@ -17,6 +17,9 @@ build/
 dist/
 *.spec.bak
 
+# ── Generated assets (re-created by tools/make_ico.py / build.bat) ───────────
+ui/assets/autodoku.ico
+
 # ── Egg / packaging ──────────────────────────────────────────────────────────
 *.egg-info/
 *.egg
