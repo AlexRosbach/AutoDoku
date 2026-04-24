@@ -23,8 +23,7 @@ from version import __version__, __app_name__
 def _base_dir() -> Path:
     """Directory next to the EXE (or project root in dev mode).
 
-    Used for user-writable files: autodoku.log, autodoku.db, config.json
-    override.
+    Used for user-writable files: autodoku.log, config.json override.
     """
     if getattr(sys, "frozen", False):
         return Path(sys.executable).parent
