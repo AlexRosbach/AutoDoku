@@ -65,6 +65,17 @@ _STRINGS: dict[str, dict[str, str]] = {
         # ── Peripheral column cell text ───────────────────────────────
         "periph_suggestion": "🟡 {n} suggestion",
         "periph_count":      "🖱 {n}",
+        # ── Filter bar ────────────────────────────────────────────────
+        "filter_label":     "Filter:",
+        "filter_all":       "All",
+        "filter_search_ph": "Search IP, hostname, model…",
+        "filter_clear":     "✕  Clear",
+        "filter_clients":   "Clients",
+        "filter_servers":   "Servers",
+        "filter_switches":  "Switches",
+        "filter_printers":  "Printers",
+        "filter_routers":   "Routers",
+        "filter_other":     "Other",
     },
     "DE": {
         # ── Top bar ───────────────────────────────────────────────────
@@ -117,6 +128,17 @@ _STRINGS: dict[str, dict[str, str]] = {
         # ── Peripheral column cell text ───────────────────────────────
         "periph_suggestion": "🟡 {n} Vorschlag",
         "periph_count":      "🖱 {n}",
+        # ── Filter bar ────────────────────────────────────────────────
+        "filter_label":     "Filter:",
+        "filter_all":       "Alle",
+        "filter_search_ph": "Suche IP, Hostname, Modell…",
+        "filter_clear":     "✕  Zurücksetzen",
+        "filter_clients":   "Clients",
+        "filter_servers":   "Server",
+        "filter_switches":  "Switches",
+        "filter_printers":  "Drucker",
+        "filter_routers":   "Router",
+        "filter_other":     "Sonstiges",
     },
 }
 
