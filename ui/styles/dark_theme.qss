@@ -122,6 +122,48 @@ QCheckBox::indicator:checked {
     border-color: #0078d4;
 }
 
+/* ── Filter bar ────────────────────────────────────────────────────── */
+QWidget#filterBar {
+    background-color: #1a1a1a;
+    border-bottom: 1px solid #2e2e2e;
+}
+
+QLabel#filterLabel {
+    color: #666;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding-right: 4px;
+}
+
+QPushButton#filterBtn {
+    background-color: #2a2a2a;
+    color: #888;
+    border: 1px solid #3a3a3a;
+    border-radius: 3px;
+    padding: 3px 10px;
+    min-width: 0;
+    font-size: 12px;
+    font-weight: normal;
+}
+QPushButton#filterBtn:hover   { background-color: #333; color: #c0c0c0; }
+QPushButton#filterBtn:checked {
+    background-color: #0078d4;
+    color: #ffffff;
+    border-color: #0078d4;
+    font-weight: bold;
+}
+
+QLineEdit#filterSearch {
+    background-color: #252526;
+    border: 1px solid #3a3a3a;
+    border-radius: 3px;
+    padding: 3px 7px;
+    font-size: 12px;
+}
+QLineEdit#filterSearch:focus { border-color: #0078d4; }
+
 /* ── Table ─────────────────────────────────────────────────────────── */
 QTableWidget {
     background-color: #1e1e1e;

@@ -5,12 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [Unreleased] — publish-readiness
+## [1.2.2] — 2026-04-29
+
+### Added
+- **Filter bar** — type buttons (All / Clients / Servers / Switches / Printers / Routers / Other) + free-text search directly above the table; rows are hidden not removed, so export still includes everything; fully translated EN/DE
 
 ### Changed
 - License changed from MIT to GPL v3 (required by PyQt6 dependency)
-- README: license badge updated, legal notice section added
-- Added `.gitignore` (excludes `.venv/`, `build/`, `dist/`, `__pycache__/`)
+- README: license badge updated to GPL v3, legal notice section added
+- `.gitignore` added — excludes `.venv/`, `build/`, `dist/`, `__pycache__/`
+- Dead `data/session_store.py` removed
 
 ---
 
