@@ -229,6 +229,49 @@ class ResultTableWidget(QTableWidget):
     def get_devices(self) -> list[Device]:
         return [self._devices[did] for did in self._order if did in self._devices]
 
+    def apply_filter(self, device_type: str = "", text: str = "") -> None:
+        """Show only rows that match *device_type* and/or *text*.
+
+        Args:
+            device_type: i-doit constant (e.g. ``DeviceType.CLIENT.value``)
+                         or ``""`` to show all types.
+            text:        Case-insensitive substring searched across IP, hostname,
+                         MAC, manufacturer, model, serial, OS, location, department.
+        """
+        text = text.strip().lower()
+        ip_col = _FIELD_TO_COL.get("ip", 3)
+
+        for row in range(self.rowCount()):
+            item = self.item(row, ip_col)
+            if not item:
+                self.setRowHidden(row, False)
+                continue
+
+            device_id = item.data(_ROLE_DEVICE_ID)
+            device = self._devices.get(device_id)
+            if not device:
+                self.setRowHidden(row, False)
+                continue
+
+            # ── Type filter ───────────────────────────────────────────
+            if device_type and device.device_type != device_type:
+                self.setRowHidden(row, True)
+                continue
+
+            # ── Text filter ───────────────────────────────────────────
+            if text:
+                haystack = " ".join(filter(None, [
+                    device.ip, device.hostname, device.mac,
+                    device.manufacturer, device.model, device.serial,
+                    device.os, device.cpu, device.location,
+                    device.room, device.department, device.contact,
+                ])).lower()
+                if text not in haystack:
+                    self.setRowHidden(row, True)
+                    continue
+
+            self.setRowHidden(row, False)
+
     # ------------------------------------------------------------------
     # Row building
     # ------------------------------------------------------------------

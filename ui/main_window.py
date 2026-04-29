@@ -25,7 +25,7 @@ from PyQt6.QtWidgets import (
 )
 
 from core.scanner import ScanWorker
-from data.models import Device, DeviceType, ScanSession
+from data.models import Device, DeviceType, DEVICE_TYPE_LABELS, ScanSession
 from export import idoit_csv_exporter
 from export.csv_importer import import_csv
 from ui.device_edit_dialog import DeviceEditDialog
@@ -74,6 +74,7 @@ class MainWindow(QMainWindow):
 
         root.addWidget(self._build_top_bar())
         root.addWidget(self._build_stats_bar())
+        root.addWidget(self._build_filter_bar())
         root.addWidget(self._build_table())
         root.addWidget(self._build_bottom_bar())
 
@@ -162,6 +163,80 @@ class MainWindow(QMainWindow):
         layout.addWidget(self._hint_lbl)
 
         return bar
+
+    def _build_filter_bar(self) -> QWidget:
+        bar = QWidget()
+        bar.setObjectName("filterBar")
+        layout = QHBoxLayout(bar)
+        layout.setContentsMargins(10, 4, 10, 4)
+        layout.setSpacing(5)
+
+        lbl = QLabel(t("filter_label"))
+        lbl.setObjectName("filterLabel")
+        layout.addWidget(lbl)
+        self._filter_label = lbl
+
+        # One toggle button per device type + "All"
+        self._active_type_filter = ""
+        self._filter_btns: dict[str, QPushButton] = {}
+
+        type_keys = [
+            ("",                       "filter_all"),
+            (DeviceType.CLIENT.value,  "filter_clients"),
+            (DeviceType.SERVER.value,  "filter_servers"),
+            (DeviceType.SWITCH.value,  "filter_switches"),
+            (DeviceType.PRINTER.value, "filter_printers"),
+            (DeviceType.ROUTER.value,  "filter_routers"),
+            (DeviceType.UNKNOWN.value, "filter_other"),
+        ]
+        for type_val, lang_key in type_keys:
+            btn = QPushButton(t(lang_key))
+            btn.setObjectName("filterBtn")
+            btn.setCheckable(True)
+            btn.setChecked(type_val == "")   # "All" active by default
+            btn.clicked.connect(lambda _checked, v=type_val, k=lang_key: self._set_type_filter(v))
+            layout.addWidget(btn)
+            self._filter_btns[type_val] = btn
+        self._filter_btn_keys: list[tuple[str, str]] = type_keys
+
+        layout.addSpacing(16)
+
+        # Free-text search
+        self._search_input = QLineEdit()
+        self._search_input.setObjectName("filterSearch")
+        self._search_input.setPlaceholderText(t("filter_search_ph"))
+        self._search_input.setFixedWidth(240)
+        self._search_input.setClearButtonEnabled(True)
+        self._search_input.textChanged.connect(self._on_search_changed)
+        layout.addWidget(self._search_input)
+
+        self._filter_clear_btn = QPushButton(t("filter_clear"))
+        self._filter_clear_btn.setObjectName("btnSecondary")
+        self._filter_clear_btn.setFixedHeight(26)
+        self._filter_clear_btn.clicked.connect(self._clear_filter)
+        layout.addWidget(self._filter_clear_btn)
+
+        layout.addStretch()
+        return bar
+
+    def _set_type_filter(self, device_type: str) -> None:
+        self._active_type_filter = device_type
+        for val, btn in self._filter_btns.items():
+            btn.setChecked(val == device_type)
+        self._apply_filter()
+
+    def _on_search_changed(self) -> None:
+        self._apply_filter()
+
+    def _clear_filter(self) -> None:
+        self._search_input.clear()
+        self._set_type_filter("")
+
+    def _apply_filter(self) -> None:
+        self._table.apply_filter(
+            device_type=self._active_type_filter,
+            text=self._search_input.text(),
+        )
 
     @staticmethod
     def _make_stat_label(caption: str, value: str, color: str = "#e0e0e0") -> QWidget:
@@ -349,6 +424,14 @@ class MainWindow(QMainWindow):
         _set_stat_caption(self._stat_switches, t("stat_switches"))
         _set_stat_caption(self._stat_printers, t("stat_printers"))
         _set_stat_caption(self._stat_other,    t("stat_other"))
+        # Filter bar
+        self._filter_label.setText(t("filter_label"))
+        self._search_input.setPlaceholderText(t("filter_search_ph"))
+        self._filter_clear_btn.setText(t("filter_clear"))
+        for type_val, lang_key in self._filter_btn_keys:
+            btn = self._filter_btns.get(type_val)
+            if btn:
+                btn.setText(t(lang_key))
         # Table column headers (ResultTableWidget handles this via its own registration)
 
     # ------------------------------------------------------------------
