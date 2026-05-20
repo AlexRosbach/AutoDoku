@@ -1,4 +1,5 @@
-PyQt6>=6.6.0
+PyQt6>=6.6.0,<6.7.0
+PyQt6-Qt6>=6.6.0,<6.7.0
 wmi>=1.5.1; sys_platform=="win32"
 pywin32>=306; sys_platform=="win32"
 paramiko>=3.4.0

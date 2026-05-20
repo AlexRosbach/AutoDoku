@@ -67,6 +67,9 @@ def export(session: ScanSession, filepath: str) -> int:
     rows: list[list[str]] = [IDOIT_COLUMNS]
 
     for device in session.devices:
+        if not device.include_in_export:
+            continue
+
         rows.append(_device_to_row(device))
 
         for periph in device.peripherals:

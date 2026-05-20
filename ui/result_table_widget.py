@@ -67,6 +67,7 @@ _ROLE_USER_EDIT  = Qt.ItemDataRole.UserRole + 3   # bool – user has edited?
 # (lang_key, field, editable, min_width, is_dropdown)
 # field == "__peripherals__" is a synthetic column rendered from device.peripherals
 _COLS: list[tuple[str, str | None, bool, int, bool]] = [
+    ("col_export",      "include_in_export", True,   70, False),
     ("col_status",       "scan_status",     False,  80, False),
     ("col_peripherals",  "__peripherals__", False,  90, False),
     ("col_type",         "device_type",     True,   90, True),   # ComboBox
@@ -229,6 +230,14 @@ class ResultTableWidget(QTableWidget):
     def get_devices(self) -> list[Device]:
         return [self._devices[did] for did in self._order if did in self._devices]
 
+    def get_export_devices(self) -> list[Device]:
+        """Return devices currently selected for CSV export."""
+        return [
+            device
+            for device in self.get_devices()
+            if getattr(device, "include_in_export", True)
+        ]
+
     def apply_filter(self, device_type: str = "", text: str = "") -> None:
         """Show only rows that match *device_type* and/or *text*.
 
@@ -289,6 +298,26 @@ class ResultTableWidget(QTableWidget):
         editable: bool,
         suggestions: dict[str, str],
     ) -> None:
+        # ── Special: scan status column ──────────────────────────────────
+        if field == "include_in_export":
+            item = QTableWidgetItem("")
+            item.setFlags(
+                (item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+                & ~Qt.ItemFlag.ItemIsEditable
+            )
+            item.setCheckState(
+                Qt.CheckState.Checked
+                if getattr(device, "include_in_export", True)
+                else Qt.CheckState.Unchecked
+            )
+            item.setData(_ROLE_DEVICE_ID, device.id)
+            item.setData(_ROLE_FIELD, field)
+            item.setToolTip("Include this device and its peripherals in the CSV export")
+            item.setBackground(QBrush(_COL_NORMAL))
+            item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.setItem(row, col, item)
+            return
+
         # ── Special: scan status column ──────────────────────────────────
         if field == "scan_status":
             status = device.scan_status
@@ -416,6 +445,11 @@ class ResultTableWidget(QTableWidget):
 
         device = self._devices.get(device_id)
         if device is None:
+            return
+
+        if field == "include_in_export":
+            device.include_in_export = item.checkState() == Qt.CheckState.Checked
+            self.device_changed.emit(device)
             return
 
         # Mark as user-edited → remove suggestion style
