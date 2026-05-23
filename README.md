@@ -10,8 +10,11 @@
 [![License: GPL v3](https://img.shields.io/badge/license-GPLv3-22c55e)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078d4)](https://github.com/AlexRosbach/AutoDoku)
 [![Python](https://img.shields.io/badge/python-3.11+-3776ab)](https://python.org)
+[![Follow on X](https://img.shields.io/badge/X-@itneedtoknow-000000)](https://x.com/itneedtoknow)
 
 AutoDoku scans your network, automatically identifies devices, and helps you fill in all the fields needed for an i-doit import — with smart auto-suggestions, inline editing, and peripheral management. No database, no server, no install.
+
+Project updates, release notes, and occasional build notes are posted on [X / @itneedtoknow](https://x.com/itneedtoknow).
 
 [**⬇ Download AutoDoku.exe**](https://github.com/AlexRosbach/AutoDoku/releases/latest)
 
