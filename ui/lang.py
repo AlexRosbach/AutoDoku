@@ -37,6 +37,7 @@ _STRINGS: dict[str, dict[str, str]] = {
         "stat_other":    "Other",
         "hint_dblclick": "Double-click a row to edit details & peripherals",
         # ── Table column headers ──────────────────────────────────────
+        "col_export":       "Export",
         "col_status":       "Status",
         "col_peripherals":  "Peripherals",
         "col_type":         "Type",
@@ -100,6 +101,7 @@ _STRINGS: dict[str, dict[str, str]] = {
         "stat_other":    "Sonstiges",
         "hint_dblclick": "Doppelklick auf Zeile zum Bearbeiten",
         # ── Table column headers ──────────────────────────────────────
+        "col_export":       "Export",
         "col_status":       "Status",
         "col_peripherals":  "Peripherie",
         "col_type":         "Typ",

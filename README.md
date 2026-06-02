@@ -6,12 +6,15 @@
 
 **Network Scanner & i-doit Documentation Assistant for Windows**
 
-[![Version](https://img.shields.io/badge/version-1.2.2-0078d4)](https://github.com/AlexRosbach/AutoDoku/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.2.3-0078d4)](https://github.com/AlexRosbach/AutoDoku/releases/latest)
 [![License: GPL v3](https://img.shields.io/badge/license-GPLv3-22c55e)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078d4)](https://github.com/AlexRosbach/AutoDoku)
 [![Python](https://img.shields.io/badge/python-3.11+-3776ab)](https://python.org)
+[![Follow on X](https://img.shields.io/badge/X-@itneedtoknow-000000)](https://x.com/itneedtoknow)
 
 AutoDoku scans your network, automatically identifies devices, and helps you fill in all the fields needed for an i-doit import — with smart auto-suggestions, inline editing, and peripheral management. No database, no server, no install.
+
+Project updates, release notes, and occasional build notes are posted on [X / @itneedtoknow](https://x.com/itneedtoknow).
 
 [**⬇ Download AutoDoku.exe**](https://github.com/AlexRosbach/AutoDoku/releases/latest)
 
@@ -36,6 +39,7 @@ AutoDoku scans your network, automatically identifies devices, and helps you fil
 - **Sysid field** — on CSV re-import i-doit updates the existing object instead of creating a duplicate
 - **Peripheral management** per Client (Monitor, Keyboard, Mouse, Headset, Docking Station, VoIP, Printer, Webcam, …)
 - **CSV export** in i-doit-compatible format — devices and peripherals as consecutive rows in one file
+- **Export selection** — tick devices on/off before export; excluded devices and their peripherals stay visible but are omitted from the CSV
 - **CSV import** — reload a previous export to continue documenting without any local database
 - **Fully in-memory** — nothing is written to disk until you export; the CSV is the only persistence
 - **Documentation score** per device with progress bar and suggestion counter
@@ -48,7 +52,7 @@ AutoDoku scans your network, automatically identifies devices, and helps you fil
 
 | | |
 |---|---|
-| **Latest release** | [AutoDoku.exe — v1.2.2](https://github.com/AlexRosbach/AutoDoku/releases/latest) |
+| **Latest release** | [AutoDoku.exe — v1.2.3](https://github.com/AlexRosbach/AutoDoku/releases/latest) |
 | **All releases** | [github.com/AlexRosbach/AutoDoku/releases](https://github.com/AlexRosbach/AutoDoku/releases) |
 
 Just download `AutoDoku.exe` and run it — no installer, no Python, no Npcap required.
@@ -140,8 +144,10 @@ Credentials are stored in the **Windows Credential Manager** (encrypted).
 
 Click **⬇ Export as CSV…** to generate an i-doit-compatible CSV file:
 
+- Use the **Export** checkbox column to decide which devices are included
 - Each device = one row with a human-readable `Object Type` (`Client`, `Server`, …)
 - Peripherals follow immediately after their parent device row
+- If a device is unchecked, its peripherals are skipped as well
 - **Sysid column first** — when populated, i-doit updates the existing object on import
 - Auto-suggested peripherals without a model or serial are silently skipped
 

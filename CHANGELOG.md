@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.2.3] — 2026-05-20
+
+### Added
+- **Export selection** — a new checkbox column lets users include or exclude individual devices from the CSV export while keeping them visible in the scan table
+- Export selection test coverage for devices and attached peripherals
+
+### Changed
+- CSV export now skips unchecked devices and their peripherals
+- README version badge, download table and export workflow documentation updated for v1.2.3
+- PyQt6/Qt6 dependencies pinned to the 6.6 line so PyInstaller bundles a runnable Windows EXE from the documented build path
+
+---
+
 ## [1.2.2] — 2026-04-29
 
 ### Added

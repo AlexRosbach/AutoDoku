@@ -117,6 +117,7 @@ class Device:
     inventory_no: str = ""          # Inventarnummer
     sysid:        str = ""          # i-doit Sysid (update-key for CSV re-import)
     notes:        str = ""
+    include_in_export: bool = True       # user can exclude rows from CSV export
     # ── Attached peripherals (in-memory, not persisted) ───────────────
     peripherals:  list[Peripheral] = field(default_factory=list)
     # ── Internal ──────────────────────────────────────────────────────

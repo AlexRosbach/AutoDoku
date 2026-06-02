@@ -492,9 +492,14 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "Export", "No data to export.")
             return
 
-        # Sync live table state into session
-        if self._session:
-            self._session.devices = devices
+        export_devices = self._table.get_export_devices()
+        if not export_devices:
+            QMessageBox.information(
+                self,
+                "Export",
+                "No devices selected for export.",
+            )
+            return
 
         path, _ = QFileDialog.getSaveFileName(
             self,
@@ -506,15 +511,21 @@ class MainWindow(QMainWindow):
             return
 
         try:
-            if self._session is None:
-                self._session = ScanSession(
-                    ip_range="",
-                    created_at=datetime.now(tz=timezone.utc).isoformat(),
-                    name="Export",
-                    devices=devices,
-                )
+            source_session = self._session or ScanSession(
+                ip_range="",
+                created_at=datetime.now(tz=timezone.utc).isoformat(),
+                name="Export",
+            )
+            source_session.devices = devices
+            export_session = ScanSession(
+                id=source_session.id,
+                ip_range=source_session.ip_range,
+                created_at=source_session.created_at,
+                name=source_session.name,
+                devices=export_devices,
+            )
 
-            count = idoit_csv_exporter.export(self._session, path)
+            count = idoit_csv_exporter.export(export_session, path)
             QMessageBox.information(
                 self,
                 "Export Successful",
