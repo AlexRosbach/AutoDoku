@@ -29,6 +29,9 @@ autodoku.log
 
 # ── Runtime config (user-local, not distributed) ─────────────────────────────
 # config.json is intentionally tracked (it ships default values with the app)
+*.local.json
+.env
+.env.*
 
 # ── IDE / editor ─────────────────────────────────────────────────────────────
 .idea/
@@ -41,8 +44,8 @@ autodoku.log
 .DS_Store
 Thumbs.db
 
-# ── Claude agent worktrees ───────────────────────────────────────────────────
-.claude/worktrees/
+# ── Claude agent state ───────────────────────────────────────────────────────
+.claude/
 
 # ── Coverage / test ──────────────────────────────────────────────────────────
 .pytest_cache/
