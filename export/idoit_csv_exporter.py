@@ -49,6 +49,13 @@ IDOIT_COLUMNS: list[str] = [
     "Ansprechpartner",
     "Inventarnummer",
     "CMDB-Status",
+    "SNMP-Switch",
+    "SNMP-Port",
+    "TLS-Zertifikate",
+    "mDNS",
+    "UPnP/SSDP",
+    "Passive Discovery",
+    "Identity Confidence",
     "Notizen",
 ]
 
@@ -110,6 +117,13 @@ def _device_to_row(device: Device) -> list[str]:
         device.contact or "",
         device.inventory_no or "",
         device.cmdb_status or "",
+        device.snmp_switch or "",
+        device.snmp_port or "",
+        device.tls_certificates or "",
+        device.mdns_summary or "",
+        device.upnp_summary or "",
+        device.passive_discovery or "",
+        device.identity_confidence or "",
         device.notes or "",
     ]
 
@@ -142,5 +156,12 @@ def _peripheral_to_row(periph: Peripheral, parent: Device) -> list[str]:
         parent.contact or "",
         "",   # Inventarnummer
         "",   # CMDB-Status
+        "",   # SNMP-Switch
+        "",   # SNMP-Port
+        "",   # TLS-Zertifikate
+        "",   # mDNS
+        "",   # UPnP/SSDP
+        "",   # Passive Discovery
+        "",   # Identity Confidence
         periph.notes or "",
     ]

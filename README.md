@@ -6,7 +6,7 @@
 
 **Network Scanner & i-doit Documentation Assistant for Windows**
 
-[![Version](https://img.shields.io/badge/version-1.2.3-0078d4)](https://github.com/AlexRosbach/AutoDoku/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.2.4-0078d4)](https://github.com/AlexRosbach/AutoDoku/releases/latest)
 [![License: GPL v3](https://img.shields.io/badge/license-GPLv3-22c55e)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078d4)](https://github.com/AlexRosbach/AutoDoku)
 [![Python](https://img.shields.io/badge/python-3.11+-3776ab)](https://python.org)
@@ -36,6 +36,7 @@ Project updates, release notes, and occasional build notes are posted on [X / @i
 - **Inline-editable result table** — CPU, RAM, model, serial and all documentation fields visible and editable directly in the table
 - **Auto-suggestions** highlighted in amber — CMDB status, location, room, department, OS and more
 - **Full i-doit field set** — Inventory No., CMDB Status, Location, Room, Department, Contact, Sysid
+- **LanLens-compatible enrichment fields** — SNMP switch/port, TLS certificate summary, mDNS, UPnP/SSDP, Passive Discovery and Identity Confidence are editable and round-trip through CSV export/import
 - **Sysid field** — on CSV re-import i-doit updates the existing object instead of creating a duplicate
 - **Peripheral management** per Client (Monitor, Keyboard, Mouse, Headset, Docking Station, VoIP, Printer, Webcam, …)
 - **CSV export** in i-doit-compatible format — devices and peripherals as consecutive rows in one file
@@ -52,7 +53,7 @@ Project updates, release notes, and occasional build notes are posted on [X / @i
 
 | | |
 |---|---|
-| **Latest release** | [AutoDoku.exe — v1.2.3](https://github.com/AlexRosbach/AutoDoku/releases/latest) |
+| **Latest release** | [AutoDoku.exe — v1.2.4](https://github.com/AlexRosbach/AutoDoku/releases/latest) |
 | **All releases** | [github.com/AlexRosbach/AutoDoku/releases](https://github.com/AlexRosbach/AutoDoku/releases) |
 
 Just download `AutoDoku.exe` and run it — no installer, no Python, no Npcap required.

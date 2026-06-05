@@ -117,6 +117,16 @@ class Device:
     inventory_no: str = ""          # Inventarnummer
     sysid:        str = ""          # i-doit Sysid (update-key for CSV re-import)
     notes:        str = ""
+    # ── LanLens-aligned documentation enrichment fields ───────────────
+    # These mirror the i-doit CSV fields that are validated in LanLens:
+    # SNMP location identity, TLS summaries and passive discovery summaries.
+    snmp_switch: str = ""
+    snmp_port: str = ""
+    tls_certificates: str = ""
+    mdns_summary: str = ""
+    upnp_summary: str = ""
+    passive_discovery: str = ""
+    identity_confidence: str = ""
     include_in_export: bool = True       # user can exclude rows from CSV export
     # ── Attached peripherals (in-memory, not persisted) ───────────────
     peripherals:  list[Peripheral] = field(default_factory=list)

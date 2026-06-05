@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.2.4] — 2026-06-05
+
+### Added
+- LanLens-compatible documentation enrichment fields for i-doit workflows: SNMP-Switch, SNMP-Port, TLS-Zertifikate, mDNS, UPnP/SSDP, Passive Discovery and Identity Confidence
+- Device edit dialog fields for the new LanLens-compatible enrichment values
+- CSV export/import round-trip coverage for the new fields
+
+### Changed
+- CSV exports now include the LanLens-validated enrichment columns while preserving export selection behavior
+- README version badge and download table updated for v1.2.4
+
+---
+
 ## [1.2.3] — 2026-05-20
 
 ### Added
