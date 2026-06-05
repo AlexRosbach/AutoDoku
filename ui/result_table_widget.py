@@ -274,6 +274,10 @@ class ResultTableWidget(QTableWidget):
                     device.manufacturer, device.model, device.serial,
                     device.os, device.cpu, device.location,
                     device.room, device.department, device.contact,
+                    device.snmp_switch, device.snmp_port,
+                    device.tls_certificates, device.mdns_summary,
+                    device.upnp_summary, device.passive_discovery,
+                    device.identity_confidence,
                 ])).lower()
                 if text not in haystack:
                     self.setRowHidden(row, True)

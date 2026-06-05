@@ -176,6 +176,13 @@ class DeviceEditDialog(QDialog):
             ("os",           "Operating System:", ""),
             ("model",        "Model:",          ""),
             ("manufacturer", "Manufacturer:",   ""),
+            ("snmp_switch", "SNMP Switch:", ""),
+            ("snmp_port", "SNMP Port:", ""),
+            ("tls_certificates", "TLS Certificates:", ""),
+            ("mdns_summary", "mDNS:", ""),
+            ("upnp_summary", "UPnP/SSDP:", ""),
+            ("passive_discovery", "Passive Discovery:", ""),
+            ("identity_confidence", "Identity Confidence:", ""),
         ]
         self._fields: dict[str, QLineEdit] = {}
         for attr, label, placeholder in field_defs:
